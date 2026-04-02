@@ -21,3 +21,5 @@ public class Courses{
     @OneToMany(mappedBy = "courses", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Video> videos = new ArrayList<>();
 }
+// video-hls/f41a59fa-456b-4e3a-9648-b3002f70dcfa_13739696_540_960_30fps.mp4
+//raw/f41a59fa-456b-4e3a-9648-b3002f70dcfa_13739696_540_960_30fps.mp4

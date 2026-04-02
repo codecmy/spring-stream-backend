@@ -1,18 +1,79 @@
-version: "3.8"
+version: '3.8'
 
 services:
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      RABBITMQ_SERVER_ADDITIONAL_ERL_ARGS: "-rabbit consumer_timeout 7200000"
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - stream-net
+
+  minio:
+    image: minio/minio
+    container_name: minio
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: admin
+      MINIO_ROOT_PASSWORD: password
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - minio-data:/data
+    networks:
+      - stream-net
+
   mysql:
     image: mysql:8.0
-    container_name: mysql_container
+    container_name: mysql
     environment:
       MYSQL_ROOT_PASSWORD: root
-      MYSQL_DATABASE: testdb
-      MYSQL_USER: appuser
-      MYSQL_PASSWORD: apppassword
+      MYSQL_DATABASE: streamdb
+      MYSQL_USER: streamuser
+      MYSQL_PASSWORD: streampass
     ports:
       - "3307:3306"
     volumes:
-      - mysql_data:/var/lib/mysql
+      - mysql-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - stream-net
+
+  worker:
+    image: transcoder-worker:latest
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      mysql:
+        condition: service_healthy
+    environment:
+      SPRING_RABBITMQ_HOST: rabbitmq
+      SPRING_RABBITMQ_PORT: 5672
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/streamdb
+      SPRING_DATASOURCE_USERNAME: streamuser
+      SPRING_DATASOURCE_PASSWORD: streampass
+      MINIO_URL: http://minio:9000
+    networks:
+      - stream-net
+
+networks:
+  stream-net:
+    driver: bridge
 
 volumes:
-  mysql_data:
+  mysql-data:
+  minio-data:

@@ -4,20 +4,24 @@ import com.example.spring_stream_backend.AppConstants;
 import com.example.spring_stream_backend.Entity.Video;
 import com.example.spring_stream_backend.payload.CustomMessage;
 import com.example.spring_stream_backend.services.VideoServices;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.core.io.*;
+import org.springframework.core.io.InputStreamResource;
+import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import io.minio.GetObjectArgs;
+import io.minio.MinioClient;
+import io.minio.StatObjectArgs;
+import io.minio.StatObjectResponse;
+import io.minio.errors.*;
+
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
+import java.io.FileNotFoundException;
 import java.util.List;
 import java.util.UUID;
 
@@ -25,22 +29,35 @@ import java.util.UUID;
 @RequestMapping("/api/v1/videos")
 @CrossOrigin(origins = "http://localhost:63342/")
 public class VideoController {
-    @Autowired
-    private VideoServices videoServices;
+    private final VideoServices videoServices;
+    private final MinioClient minioClient;
+
+    @Value("${minio.bucket}")
+    private String bucketName;
+
+    public VideoController(VideoServices videoServices, MinioClient minioClient) {
+        this.videoServices = videoServices;
+        this.minioClient = minioClient;
+    }
+
     @PostMapping
     public ResponseEntity<?> uploadVideo(@RequestParam("file") MultipartFile file,
                                                      @RequestParam("title") String title,
-                                                     @RequestParam("description") String desc) throws IOException {
+                                                     @RequestParam("description") String desc) {
+
+        if (file.isEmpty()) {
+            return ResponseEntity.badRequest()
+                    .body(CustomMessage.builder().message("Video file is required").success(false).build());
+        }
 
         Video video = new Video();
         video.setVideoId(UUID.randomUUID().toString());
         video.setVideoDescription(desc);
         video.setTitle(title);
-        Video save = videoServices.save(video, file);
-        if(save!=null){
-            videoServices.processVideo(video.getVideoId());
-            return new ResponseEntity<>(HttpStatus.OK);
-        }else {
+        try {
+            videoServices.save(video, file);
+            return ResponseEntity.status(HttpStatus.CREATED).build();
+        } catch (IOException e) {
             return ResponseEntity
                     .status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(CustomMessage.builder().message("Video Not uploaded")
@@ -49,66 +66,51 @@ public class VideoController {
         }
     }
 
-    //Stream Videos
-    //URL
-    @GetMapping("/stream/{videoId}")
-    public ResponseEntity<Resource> stream(@PathVariable String videoId){
-        Video byId = videoServices.findById(videoId);
-        if (byId == null) {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-        }
-        String contentType = byId.getContentType();
-        String filepath = byId.getFilepath();
-        Resource resource = new FileSystemResource(filepath);
-
-        if(contentType==null){
-            contentType="application/octet-stream";
-        }
-        return ResponseEntity
-                .ok()
-                .contentType(MediaType.parseMediaType(contentType))
-                .body(resource);
-    }
     @GetMapping
     public List<Video> getAllVideos(){
         return videoServices.getAllVideo();
     }
-    //stream HLS file
 
-    @Value("${files.video.hsl}")
-    public String HSL_Path;
+
+
+    //stream HLS file
     @GetMapping("/{videoId}/master.m3u8")
     public ResponseEntity<Resource> hlsStreamVideos(
             @PathVariable String videoId
     ){
-        //Create Path
-        Path path=Paths.get(HSL_Path,videoId,"master.m3u8");
-
-        if(!Files.exists(path)){
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        try {
+            Resource resource = videoServices.getm3u8(videoId);
+            if(resource==null){
+                throw new FileNotFoundException("File does not exists");
+            }
+            return ResponseEntity
+                    .ok()
+                    .header(HttpHeaders.CONTENT_TYPE, "application/vnd.apple.mpegurl")
+                    .body(resource);
+        } catch (FileNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+        } catch (IOException e) {
+            return ResponseEntity.internalServerError().build();
         }
-        Resource resource=new FileSystemResource(path);
-
-        return ResponseEntity
-                .ok()
-                .header(HttpHeaders.CONTENT_TYPE,"application/vnd.apple.mpegurl")
-                .body(resource);
     }
     @GetMapping("/{videoId}/{segment}.ts")
     public ResponseEntity<Resource> serveSegments(
             @PathVariable String videoId,
             @PathVariable String segment
     ){
-        Path path = Paths.get(HSL_Path, videoId, segment + ".ts");
-        FileSystemResource resource = new FileSystemResource(path);
-        if(!resource.exists()){
-            return  new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        try {
+            InputStream videoSegment = videoServices.getVideoSegement(videoId,segment);
+            Resource resource = new InputStreamResource(videoSegment);
+            return ResponseEntity
+                    .ok()
+                    .header(HttpHeaders.CONTENT_TYPE,"video/mp2t")
+                    .body(resource);
+
+        }catch (FileNotFoundException e){
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }catch (Exception e){
+            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
         }
-        System.out.println("Segments are served API are called");
-        return ResponseEntity
-                .ok()
-                .header(HttpHeaders.CONTENT_TYPE,"video/mp2t")
-                .body(resource);
     }
     @GetMapping("stream/range/{videoId}")
     public ResponseEntity<Resource> streamVideoRange(
@@ -119,16 +121,40 @@ public class VideoController {
         if (byId == null) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
-        Path filepath = Paths.get(byId.getFilepath());
-        Resource resource = new FileSystemResource(filepath);
+        String objectName = byId.getFilepath();
+        if (objectName == null || objectName.isBlank()) {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
+
         String contentType = byId.getContentType();
         if(contentType==null){
             contentType="application/octet-stream";
         }
-        long fileLength=filepath.toFile().length();
-        if(range==null){
-            return ResponseEntity.ok().contentType(MediaType.parseMediaType(contentType)).body(resource);
+
+        long fileLength;
+        try {
+            StatObjectResponse statObject = minioClient.statObject(
+                    StatObjectArgs.builder().bucket(bucketName).object(objectName).build()
+            );
+            fileLength = statObject.size();
+        } catch (Exception e) {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
+
+        if(range==null){
+            try {
+                InputStream fullStream = minioClient.getObject(
+                        GetObjectArgs.builder().bucket(bucketName).object(objectName).build()
+                );
+                return ResponseEntity.ok()
+                        .header("Accept-Ranges", "bytes")
+                        .contentType(MediaType.parseMediaType(contentType))
+                        .body(new InputStreamResource(fullStream));
+            } catch (Exception e) {
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+            }
+        }
+
         String normalized = range.trim();
         if (normalized.startsWith("bytes=")) {
             normalized = normalized.substring("bytes=".length());
@@ -184,21 +210,20 @@ public class VideoController {
         }
 
         long content=rangeEnd-rangeStart+1;
-        byte[] buffer;
-        try(InputStream inputStream = Files.newInputStream(filepath)){
-            skipFully(inputStream, rangeStart);
-            buffer = inputStream.readNBytes((int) content);
-        }catch (IOException e){
+        InputStream inputStream;
+        try{
+            inputStream = minioClient.getObject(
+                    GetObjectArgs.builder()
+                            .bucket(bucketName)
+                            .object(objectName)
+                            .offset(rangeStart)
+                            .length(content)
+                            .build()
+            );
+        }catch (Exception e){
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
-
-        if (buffer.length == 0) {
-            return ResponseEntity.status(HttpStatus.REQUESTED_RANGE_NOT_SATISFIABLE)
-                    .header("Content-Range", "bytes */" + fileLength)
-                    .build();
-        }
-
-        long actualRangeEnd = rangeStart + buffer.length - 1;
+        long actualRangeEnd = rangeEnd;
         HttpHeaders headers = new HttpHeaders();
         headers.add("Content-Range", "bytes "+rangeStart+"-"+actualRangeEnd+"/"+fileLength);
         headers.add("Accept-Ranges", "bytes");
@@ -206,26 +231,12 @@ public class VideoController {
         headers.add("Pragma", "no-cache");
         headers.add("Expires", "0");
         headers.add("X-Content-Type-Options", "nosniff");
-        headers.setContentLength(buffer.length);
+        headers.setContentLength(content);
 
         return ResponseEntity
                 .status(HttpStatus.PARTIAL_CONTENT)
                 .headers(headers)
                 .contentType(MediaType.parseMediaType(contentType))
-                .body(new ByteArrayResource(buffer));
-    }
-
-    private void skipFully(InputStream inputStream, long bytesToSkip) throws IOException {
-        long remaining = bytesToSkip;
-        while (remaining > 0) {
-            long skipped = inputStream.skip(remaining);
-            if (skipped <= 0) {
-                if (inputStream.read() == -1) {
-                    break;
-                }
-                skipped = 1;
-            }
-            remaining -= skipped;
-        }
+                .body(new InputStreamResource(inputStream));
     }
 }

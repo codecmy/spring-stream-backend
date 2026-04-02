@@ -3,225 +3,165 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Video Stream API Tester</title>
+  <title>Video Stream Tester</title>
   <style>
     :root {
-      --bg: #0c1222;
-      --panel: #131c34;
-      --panel-2: #1a2748;
-      --text: #f2f6ff;
-      --muted: #9db0dd;
-      --ok: #33d17a;
-      --warn: #f4c430;
-      --danger: #ff5d73;
-      --accent: #4ea3ff;
-      --ring: rgba(78, 163, 255, 0.35);
+      --bg: #f3f6fb;
+      --card: #ffffff;
+      --text: #122033;
+      --muted: #5b6b80;
+      --border: #dbe3ee;
+      --primary: #0b6bcb;
+      --primary-2: #0958a6;
+      --ok: #0d8f5b;
+      --warn: #9a6a00;
+      --err: #bb1e2d;
     }
 
     * { box-sizing: border-box; }
 
     body {
       margin: 0;
-      min-height: 100vh;
       font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
       color: var(--text);
-      background:
-        radial-gradient(900px 450px at 10% -10%, #1f3568 0%, transparent 60%),
-        radial-gradient(700px 400px at 90% 120%, #18305d 0%, transparent 60%),
-        var(--bg);
-      display: grid;
-      place-items: center;
+      background: radial-gradient(circle at 10% 0%, #e7f0ff 0%, transparent 45%), var(--bg);
+      min-height: 100vh;
       padding: 24px;
     }
 
     .app {
-      width: min(1100px, 100%);
+      width: min(980px, 100%);
+      margin: 0 auto;
       display: grid;
-      grid-template-columns: 340px 1fr;
-      gap: 18px;
+      grid-template-columns: 320px 1fr;
+      gap: 16px;
     }
 
     .card {
-      background: linear-gradient(180deg, var(--panel) 0%, var(--panel-2) 100%);
-      border: 1px solid rgba(255, 255, 255, 0.08);
-      border-radius: 16px;
-      padding: 18px;
-      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.35);
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 16px;
+      box-shadow: 0 8px 18px rgba(10, 40, 80, 0.08);
     }
 
-    .title {
-      margin: 0 0 6px;
-      font-size: 1.25rem;
-      font-weight: 700;
+    h1, h2 {
+      margin: 0 0 10px;
+      font-size: 1.1rem;
     }
 
-    .subtitle {
-      margin: 0 0 16px;
+    .sub {
+      margin: 0 0 12px;
       color: var(--muted);
-      font-size: 0.95rem;
+      font-size: 0.9rem;
+      line-height: 1.35;
     }
 
     label {
       display: block;
-      margin: 12px 0 6px;
-      font-size: 0.9rem;
-      color: #c6d4f5;
+      margin: 10px 0 6px;
+      font-size: 0.85rem;
+      color: #304760;
     }
 
     input {
       width: 100%;
-      border: 1px solid rgba(255, 255, 255, 0.15);
-      background: rgba(8, 14, 29, 0.65);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 9px 10px;
+      font-size: 0.92rem;
       color: var(--text);
-      border-radius: 10px;
-      padding: 10px 12px;
-      outline: none;
-      transition: border-color 120ms ease, box-shadow 120ms ease;
+      background: #fff;
     }
 
     input:focus {
-      border-color: var(--accent);
-      box-shadow: 0 0 0 3px var(--ring);
+      outline: 2px solid #b8d9ff;
+      border-color: #84b8ef;
     }
 
     .row {
       display: flex;
-      gap: 10px;
-      margin-top: 14px;
+      gap: 8px;
       flex-wrap: wrap;
+      margin-top: 12px;
     }
 
     button {
       border: 0;
-      padding: 10px 14px;
-      border-radius: 10px;
-      cursor: pointer;
-      color: white;
+      border-radius: 8px;
+      padding: 9px 12px;
+      background: var(--primary);
+      color: #fff;
       font-weight: 600;
-      background: var(--accent);
+      cursor: pointer;
     }
 
-    button.secondary {
-      background: #2e436f;
-    }
+    button:hover { background: var(--primary-2); }
+    button:disabled { opacity: 0.6; cursor: not-allowed; }
 
     .status {
-      margin-top: 12px;
-      min-height: 20px;
+      margin: 12px 0 0;
       font-size: 0.9rem;
+      min-height: 20px;
       color: var(--muted);
     }
 
     .status.ok { color: var(--ok); }
     .status.warn { color: var(--warn); }
-    .status.error { color: var(--danger); }
-
-    .status.note { color: #8cc4ff; }
+    .status.error { color: var(--err); }
 
     .list {
-      margin-top: 14px;
-      max-height: 280px;
+      margin-top: 12px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      max-height: 240px;
       overflow: auto;
-      border: 1px solid rgba(255, 255, 255, 0.09);
-      border-radius: 10px;
-      background: rgba(5, 11, 22, 0.35);
     }
 
     .item {
-      padding: 10px 12px;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      padding: 10px;
+      border-bottom: 1px solid var(--border);
       cursor: pointer;
     }
 
     .item:last-child { border-bottom: none; }
-    .item:hover { background: rgba(78, 163, 255, 0.12); }
-    .item .id { font-size: 0.76rem; color: #b7c7ec; word-break: break-all; }
-    .item .name { font-size: 0.92rem; margin-bottom: 4px; }
+    .item:hover { background: #f4f8ff; }
 
-    .player-wrap {
-      display: grid;
-      gap: 12px;
-      align-content: start;
-    }
-
-    .player-head {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 10px;
-      flex-wrap: wrap;
+    .id {
+      font-size: 0.78rem;
+      color: #5a6f88;
+      word-break: break-all;
+      margin-top: 4px;
     }
 
     .pill {
-      border: 1px solid rgba(255, 255, 255, 0.15);
+      margin-bottom: 10px;
+      border: 1px solid var(--border);
       border-radius: 999px;
       padding: 6px 10px;
-      font-size: 0.75rem;
-      color: #d1ddf8;
-      background: rgba(0, 0, 0, 0.2);
-      max-width: 100%;
+      font-size: 0.78rem;
+      color: #3e556f;
+      white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
-      white-space: nowrap;
     }
 
     video {
       width: 100%;
-      background: #02050f;
-      border-radius: 12px;
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      min-height: 250px;
-      max-height: 70vh;
+      min-height: 260px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: #0f1b2d;
     }
 
     .hint {
+      margin: 10px 0 0;
+      font-size: 0.84rem;
       color: var(--muted);
-      font-size: 0.85rem;
-      margin: 0;
       line-height: 1.4;
     }
 
-    .meta {
-      margin: 0;
-      border: 1px solid rgba(255, 255, 255, 0.12);
-      border-radius: 10px;
-      background: rgba(7, 12, 24, 0.45);
-      padding: 10px 12px;
-      color: #d8e3ff;
-      font-size: 0.82rem;
-      white-space: pre-wrap;
-      word-break: break-word;
-      line-height: 1.35;
-    }
-
-    .auth-box {
-      margin-bottom: 14px;
-      border: 1px solid rgba(255, 255, 255, 0.12);
-      border-radius: 12px;
-      padding: 10px;
-      background: rgba(7, 12, 24, 0.45);
-    }
-
-    .auth-actions {
-      display: flex;
-      gap: 8px;
-      flex-wrap: wrap;
-      margin-top: 10px;
-    }
-
-    .locked {
-      opacity: 0.55;
-      pointer-events: none;
-      user-select: none;
-    }
-
-    hanko-auth, hanko-profile {
-      display: block;
-      min-height: 180px;
-      margin-top: 10px;
-    }
-
-    @media (max-width: 940px) {
+    @media (max-width: 900px) {
       .app { grid-template-columns: 1fr; }
     }
   </style>
@@ -229,350 +169,74 @@
 <body>
   <main class="app">
     <section class="card">
-      <h1 class="title">Stream API Tester</h1>
-      <p class="subtitle">Tests your Spring endpoint from VideoController with Hanko auth gating.</p>
-
-      <div class="auth-box">
-        <label for="hankoApiUrl">Hanko API URL</label>
-        <input id="hankoApiUrl" placeholder="https://your-project.hanko.io" />
-
-        <label for="hankoCookieName">Hanko Cookie Name</label>
-        <input id="hankoCookieName" value="hanko" />
-
-        <div class="auth-actions">
-          <button id="initHankoBtn">Initialize Widget</button>
-          <button id="validateSessionBtn">Validate Session</button>
-          <button id="logoutBtn" class="secondary">Logout</button>
-        </div>
-
-        <p id="authStatus" class="status warn">Authentication required before API usage.</p>
-        <hanko-auth id="hankoAuth"></hanko-auth>
-      </div>
-
-      <div id="appControls" class="locked">
+      <h1>Spring Video Tester</h1>
+      <p class="sub">Uses current controller APIs only: upload, list videos, and play HLS by videoId.</p>
 
       <label for="baseUrl">Base URL</label>
-      <input id="baseUrl" value="http://localhost:8080/api/v1/videos" />
+      <input id="baseUrl" value="http://localhost:8081/api/v1/videos" />
 
-      <label for="videoTitle">Upload Title</label>
-      <input id="videoTitle" placeholder="Enter title for upload" />
+      <label for="videoTitle">Title</label>
+      <input id="videoTitle" placeholder="Video title" />
 
-      <label for="videoDescription">Upload Description</label>
-      <input id="videoDescription" placeholder="Enter description for upload" />
+      <label for="videoDescription">Description</label>
+      <input id="videoDescription" placeholder="Video description" />
 
-      <label for="videoFile">Video File</label>
+      <label for="videoFile">Video file</label>
       <input id="videoFile" type="file" accept="video/*" />
 
       <div class="row">
-        <button id="uploadBtn">Upload + Segment</button>
+        <button id="uploadBtn">Upload Video</button>
+        <button id="listBtn">Refresh List</button>
       </div>
 
       <label for="videoId">Video ID</label>
-      <input id="videoId" placeholder="Paste videoId (UUID/string)" />
-
-      <label for="hlsUrlTemplate">HLS URL Template</label>
-      <input id="hlsUrlTemplate" value="{origin}/api/v1/videos/{videoId}/master.m3u8" />
-
-      <label for="rangeStart">Range Start (bytes)</label>
-      <input id="rangeStart" type="number" min="0" placeholder="0" />
-
-      <label for="rangeEnd">Range End (bytes, optional)</label>
-      <input id="rangeEnd" type="number" min="0" placeholder="Example: 1048575" />
-
-      <label for="rangeFormat">Range Header Format</label>
-      <input id="rangeFormat" value="standard" placeholder="standard or controller" />
+      <input id="videoId" placeholder="Paste videoId or click from list" />
 
       <div class="row">
-        <button id="loadBtn">Play (No Range Header)</button>
-        <button id="playRangeAutoBtn">Play Range Endpoint (Auto)</button>
         <button id="playHlsBtn">Play HLS</button>
-        <button id="loadRangeBtn">Test Single Range Request</button>
-        <button id="listBtn" class="secondary">Load Video List</button>
       </div>
 
-      <p id="status" class="status">Waiting for input...</p>
-      <p id="envNote" class="status note"></p>
-      <p id="hlsSupportNote" class="status note"></p>
+      <p id="status" class="status">Ready.</p>
 
-      <div id="videoList" class="list" hidden></div>
-      </div>
+      <div id="videoList" class="list"></div>
     </section>
 
-    <section class="card player-wrap">
-      <div class="player-head">
-        <h2 class="title" style="margin:0">Preview Player</h2>
-        <span id="streamUrl" class="pill">No stream loaded</span>
-      </div>
-
+    <section class="card">
+      <h2>Player</h2>
+      <div id="streamUrl" class="pill">No stream loaded</div>
       <video id="player" controls preload="metadata"></video>
-
-      <pre id="responseMeta" class="meta">No response info yet.</pre>
-
       <p class="hint">
-        Endpoints used: <code>GET /api/v1/videos/stream/{videoId}</code> and <code>GET /api/v1/videos/stream/range/{videoId}</code><br/>
-        Upload endpoint: <code>POST /api/v1/videos</code> (<code>file</code>, <code>title</code>, <code>description</code>)<br/>
-        HLS endpoint expected by template: <code>/api/v1/videos/{videoId}/master.m3u8</code><br/>
-        Range header supports: <code>bytes=START-END</code> (standard) or <code>bytes-START-END</code>.
-        Server chunking note: backend returns up to 1MB per range request.
-        <br/>
-        If list loading fails from file mode, use a local server or enable CORS in backend.
-      </p>
-
-      <p class="hint">
-        User manual (Chrome):
-        <br/>1. Start backend and make sure FFmpeg is installed and available in system PATH.
-        <br/>2. Open this page from an HTTP origin (not <code>file://</code>) so cookies and CORS work correctly.
-        <br/>3. Paste your Hanko API URL and click <code>Initialize Widget</code>.
-        <br/>4. Register/login in the Hanko widget, then click <code>Validate Session</code>.
-        <br/>5. Once auth status becomes valid, use upload/list/play controls.
-        <br/>6. For Chrome, HLS will play through <code>hls.js</code> fallback automatically.
-        <br/>7. Use <code>Logout</code> to end session and re-lock API controls.
+        HLS endpoint: <code>GET /api/v1/videos/{videoId}/master.m3u8</code><br/>
+        Segment endpoint (resolved by player): <code>GET /api/v1/videos/{videoId}/{segment}.ts</code><br/>
+        Upload endpoint: <code>POST /api/v1/videos</code> with <code>file</code>, <code>title</code>, <code>description</code>
       </p>
     </section>
   </main>
 
   <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
-  <script type="module">
-    import { register } from "https://cdn.jsdelivr.net/npm/@teamhanko/hanko-elements/dist/elements.js";
-
-    let hankoClient = null;
-    let hankoInitializedForApi = "";
-    const hankoApiUrlEl = document.getElementById("hankoApiUrl");
-    const initHankoBtn = document.getElementById("initHankoBtn");
-    const hankoCookieNameEl = document.getElementById("hankoCookieName");
-    const validateSessionBtn = document.getElementById("validateSessionBtn");
-    const logoutBtn = document.getElementById("logoutBtn");
-    const authStatusEl = document.getElementById("authStatus");
-    const hankoAuthEl = document.getElementById("hankoAuth");
-    const appControlsEl = document.getElementById("appControls");
-
+  <script>
     const baseUrlEl = document.getElementById("baseUrl");
     const videoTitleEl = document.getElementById("videoTitle");
     const videoDescriptionEl = document.getElementById("videoDescription");
     const videoFileEl = document.getElementById("videoFile");
-    const uploadBtn = document.getElementById("uploadBtn");
     const videoIdEl = document.getElementById("videoId");
-    const hlsUrlTemplateEl = document.getElementById("hlsUrlTemplate");
-    const rangeStartEl = document.getElementById("rangeStart");
-    const rangeEndEl = document.getElementById("rangeEnd");
-    const rangeFormatEl = document.getElementById("rangeFormat");
-    const loadBtn = document.getElementById("loadBtn");
-    const playRangeAutoBtn = document.getElementById("playRangeAutoBtn");
-    const playHlsBtn = document.getElementById("playHlsBtn");
-    const loadRangeBtn = document.getElementById("loadRangeBtn");
+    const uploadBtn = document.getElementById("uploadBtn");
     const listBtn = document.getElementById("listBtn");
+    const playHlsBtn = document.getElementById("playHlsBtn");
     const statusEl = document.getElementById("status");
-    const envNoteEl = document.getElementById("envNote");
-    const hlsSupportNoteEl = document.getElementById("hlsSupportNote");
+    const listEl = document.getElementById("videoList");
     const player = document.getElementById("player");
     const streamUrlEl = document.getElementById("streamUrl");
-    const listEl = document.getElementById("videoList");
-    const responseMetaEl = document.getElementById("responseMeta");
-    let currentBlobUrl = "";
+
     let hlsInstance = null;
-    let isAuthenticated = false;
 
     function setStatus(text, tone = "") {
       statusEl.className = `status ${tone}`.trim();
       statusEl.textContent = text;
     }
 
-    function setAuthStatus(text, tone = "") {
-      authStatusEl.className = `status ${tone}`.trim();
-      authStatusEl.textContent = text;
-    }
-
-    function setAppLocked(locked) {
-      appControlsEl.classList.toggle("locked", locked);
-    }
-
-    function getCookie(name) {
-      const source = document.cookie || "";
-      const match = source
-        .split("; ")
-        .find((row) => row.startsWith(`${name}=`));
-      if (!match) return "";
-      return decodeURIComponent(match.split("=").slice(1).join("="));
-    }
-
-    async function initHankoElement() {
-      const api = hankoApiUrlEl.value.trim().replace(/\/+$/, "");
-      if (!api) {
-        setAuthStatus("Set Hanko API URL, then click Initialize Widget.", "warn");
-        return false;
-      }
-      if (hankoInitializedForApi && hankoInitializedForApi !== api) {
-        setAuthStatus("Hanko already initialized with a different API URL. Reload page to switch.", "warn");
-        return false;
-      }
-      if (hankoInitializedForApi === api) {
-        return true;
-      }
-      try {
-        const { hanko } = await register(api);
-        hankoClient = hanko;
-        hankoInitializedForApi = api;
-        hankoAuthEl.setAttribute("api", api);
-        setAuthStatus("Hanko widget initialized. Complete registration/login.", "ok");
-        return true;
-      } catch (err) {
-        setAuthStatus(
-          `Hanko initialization failed: ${err.message}. Check API URL and ensure your current origin (${window.location.origin}) is added as APP URL in Hanko Console.`,
-          "error"
-        );
-        return false;
-      }
-    }
-
-    async function validateSession() {
-      const hankoApi = hankoApiUrlEl.value.trim();
-      const cookieName = hankoCookieNameEl.value.trim() || "hanko";
-      if (!hankoApi) {
-        setAuthStatus("Set Hanko API URL first.", "warn");
-        isAuthenticated = false;
-        setAppLocked(true);
-        return false;
-      }
-      if (!hankoInitializedForApi) {
-        const initialized = await initHankoElement();
-        if (!initialized) {
-          return false;
-        }
-      }
-
-      const sessionToken = getCookie(cookieName);
-
-      try {
-        const apiBase = hankoApi.replace(/\/+$/, "");
-        let payload = null;
-        let validated = false;
-
-        if (sessionToken) {
-          const validateRes = await fetch(`${apiBase}/sessions/validate`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ session_token: sessionToken })
-          });
-          if (validateRes.ok) {
-            payload = await validateRes.json();
-            validated = !!payload?.is_valid;
-          }
-        }
-
-        if (!validated) {
-          const currentRes = await fetch(`${apiBase}/sessions/current`, {
-            method: "GET",
-            credentials: "include"
-          });
-          if (currentRes.ok) {
-            payload = await currentRes.json();
-            validated = true;
-          }
-        }
-
-        if (validated) {
-          isAuthenticated = true;
-          setAppLocked(false);
-          setAuthStatus(`Authenticated. User: ${(payload && (payload.user_id || payload.id)) || "unknown"}`, "ok");
-          return true;
-        }
-
-        isAuthenticated = false;
-        setAppLocked(true);
-        setAuthStatus("Session is invalid. Please login again.", "error");
-        return false;
-      } catch (err) {
-        isAuthenticated = false;
-        setAppLocked(true);
-        setAuthStatus(`Session validation failed: ${err.message}`, "error");
-        return false;
-      }
-    }
-
-    async function logout() {
-      const hankoApi = hankoApiUrlEl.value.trim().replace(/\/+$/, "");
-      const cookieName = hankoCookieNameEl.value.trim() || "hanko";
-      try {
-        if (hankoApi) {
-          const tryDelete = async (url) => fetch(url, { method: "DELETE", credentials: "include" });
-          let res = await tryDelete(`${hankoApi}/sessions/current`);
-          if (!res.ok) {
-            res = await tryDelete(`${hankoApi}/sessions`);
-          }
-        }
-      } catch {
-        // best-effort logout; local state is still reset below
-      }
-
-      document.cookie = `${cookieName}=; Max-Age=0; path=/`;
-      if (hankoClient?.user?.logout) {
-        try {
-          await hankoClient.user.logout();
-        } catch {
-          // best effort
-        }
-      }
-      isAuthenticated = false;
-      setAppLocked(true);
-      setAuthStatus("Logged out.", "warn");
-    }
-
-    function requireAuth() {
-      if (isAuthenticated) return true;
-      setStatus("Authenticate first: complete Hanko login/register and click Validate Session.", "warn");
-      return false;
-    }
-
-    async function apiFetch(url, options = {}) {
-      const headers = Object.assign({}, options.headers || {});
-      return fetch(url, Object.assign({}, options, {
-        headers,
-        credentials: "include"
-      }));
-    }
-
-    function normalizeBaseUrl(value) {
-      return value.replace(/\/+$/, "");
-    }
-
-    function makeStreamUrl() {
-      const base = normalizeBaseUrl(baseUrlEl.value.trim());
-      const id = videoIdEl.value.trim();
-      if (!base || !id) return "";
-      return `${base}/stream/${encodeURIComponent(id)}`;
-    }
-
-    function makeRangeStreamUrl() {
-      const base = normalizeBaseUrl(baseUrlEl.value.trim());
-      const id = videoIdEl.value.trim();
-      if (!base || !id) return "";
-      return `${base}/stream/range/${encodeURIComponent(id)}`;
-    }
-
-    function makeHlsMasterUrl() {
-      const id = videoIdEl.value.trim();
-      if (!id) return "";
-
-      const base = normalizeBaseUrl(baseUrlEl.value.trim());
-      if (!base) return "";
-
-      let origin = "";
-      try {
-        origin = new URL(base).origin;
-      } catch {
-        return "";
-      }
-
-      const template = hlsUrlTemplateEl.value.trim();
-      return template
-        .replaceAll("{origin}", origin)
-        .replaceAll("{videoId}", encodeURIComponent(id));
-    }
-
-    function clearBlobUrl() {
-      if (!currentBlobUrl) return;
-      URL.revokeObjectURL(currentBlobUrl);
-      currentBlobUrl = "";
+    function normalizeBaseUrl(url) {
+      return (url || "").trim().replace(/\/+$/, "");
     }
 
     function clearHls() {
@@ -581,56 +245,19 @@
       hlsInstance = null;
     }
 
-    function buildRangeHeader() {
-      const start = rangeStartEl.value.trim();
-      const end = rangeEndEl.value.trim();
-      const format = (rangeFormatEl.value.trim() || "controller").toLowerCase();
-
-      if (!start) return "";
-      if (format === "standard") return `bytes=${start}-${end}`;
-      return end ? `bytes-${start}-${end}` : `bytes-${start}-`;
-    }
-
-    function setResponseMeta(text) {
-      responseMetaEl.textContent = text;
-    }
-
-    function setEnvNote() {
-      if (window.location.protocol === "file:") {
-        envNoteEl.textContent = "You are opening this file directly (file://). Fetch with custom headers may be blocked by CORS or the browser. Serve it via a local server (http://localhost) for the best results.";
-      } else {
-        envNoteEl.textContent = "";
-      }
-    }
-
-    function setHlsSupportNote() {
-      const nativeHls = player.canPlayType("application/vnd.apple.mpegurl");
-      const hlsJsSupported = !!(window.Hls && window.Hls.isSupported());
-
-      if (nativeHls) {
-        hlsSupportNoteEl.textContent = "HLS support: native browser playback is available.";
-        return;
-      }
-      if (hlsJsSupported) {
-        hlsSupportNoteEl.textContent = "HLS support: using hls.js (recommended for Chrome).";
-        return;
-      }
-      hlsSupportNoteEl.textContent = "HLS support: not available in this browser. Use latest Chrome/Edge and ensure Media Source Extensions are enabled.";
+    function makeMasterUrl(videoId) {
+      const base = normalizeBaseUrl(baseUrlEl.value);
+      return `${base}/${encodeURIComponent(videoId)}/master.m3u8`;
     }
 
     async function uploadVideo() {
-      if (!requireAuth()) return;
-      const base = normalizeBaseUrl(baseUrlEl.value.trim());
+      const base = normalizeBaseUrl(baseUrlEl.value);
       const title = videoTitleEl.value.trim();
       const description = videoDescriptionEl.value.trim();
-      const file = videoFileEl.files?.[0];
+      const file = videoFileEl.files && videoFileEl.files[0];
 
-      if (!base) {
-        setStatus("Please provide Base URL first.", "warn");
-        return;
-      }
-      if (!title || !description || !file) {
-        setStatus("Upload needs title, description, and file.", "warn");
+      if (!base || !title || !description || !file) {
+        setStatus("Base URL, title, description and file are required.", "warn");
         return;
       }
 
@@ -641,18 +268,20 @@
 
       try {
         uploadBtn.disabled = true;
-        setStatus("Uploading file and triggering backend segmentation...");
-        const res = await apiFetch(base, { method: "POST", body: formData });
-        setResponseMeta(
-          `Request mode: multipart upload\nStatus: ${res.status}\nContent-Type: ${res.headers.get("Content-Type") || "unknown"}`
-        );
+        setStatus("Uploading video...");
+
+        const res = await fetch(base, {
+          method: "POST",
+          body: formData,
+          credentials: "include"
+        });
 
         if (!res.ok) {
           throw new Error(`HTTP ${res.status}`);
         }
 
-        setStatus("Upload request completed. Refreshing video list to pick the new ID.", "ok");
-        await loadVideoList({ autoSelectTitle: title });
+        setStatus("Upload successful. Refreshing list...", "ok");
+        await loadVideos({ autoSelectTitle: title });
       } catch (err) {
         setStatus(`Upload failed: ${err.message}`, "error");
       } finally {
@@ -660,113 +289,82 @@
       }
     }
 
-    function loadStream() {
-      if (!requireAuth()) return;
-      const streamUrl = makeStreamUrl();
-      if (!streamUrl) {
-        setStatus("Please provide Base URL and Video ID.", "warn");
-        return;
-      }
-
-      clearHls();
-      clearBlobUrl();
-      player.crossOrigin = "use-credentials";
-      streamUrlEl.textContent = streamUrl;
-      player.src = streamUrl;
-      player.load();
-      setResponseMeta("Request mode: direct video src\nRange header: none");
-
-      player
-        .play()
-        .then(() => setStatus("Streaming started from normal stream endpoint.", "ok"))
-        .catch(() => setStatus("Stream loaded. Press play if autoplay is blocked.", "warn"));
-    }
-
-    async function loadStreamWithRangeHeader() {
-      if (!requireAuth()) return;
-      const streamUrl = makeRangeStreamUrl();
-      const rangeHeader = buildRangeHeader();
-      if (!streamUrl) {
-        setStatus("Please provide Base URL and Video ID.", "warn");
-        return;
-      }
-      if (!rangeHeader) {
-        setStatus("Please provide at least Range Start to send a Range header.", "warn");
+    async function loadVideos(options = {}) {
+      const base = normalizeBaseUrl(baseUrlEl.value);
+      if (!base) {
+        setStatus("Base URL is required.", "warn");
         return;
       }
 
       try {
-        setStatus(`Fetching range chunk with header: ${rangeHeader}`);
-        const res = await apiFetch(streamUrl, {
-          method: "GET",
-          headers: { Range: rangeHeader }
-        });
+        listBtn.disabled = true;
+        setStatus("Loading videos...");
+        listEl.innerHTML = "";
 
-        const contentType = res.headers.get("Content-Type") || "unknown";
-        const contentLength = res.headers.get("Content-Length") || "unknown";
-        const contentRange = res.headers.get("Content-Range") || "missing";
-        setResponseMeta(
-          `Request mode: fetch + blob\nRange header sent: ${rangeHeader}\nStatus: ${res.status}\nContent-Type: ${contentType}\nContent-Length: ${contentLength}\nContent-Range: ${contentRange}`
-        );
+        const res = await fetch(base, { credentials: "include" });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
 
-        if (!res.ok) {
-          throw new Error(`HTTP ${res.status}`);
+        const videos = await res.json();
+        if (!Array.isArray(videos) || videos.length === 0) {
+          listEl.innerHTML = '<div class="item">No videos found.</div>';
+          setStatus("No videos found.", "warn");
+          return;
         }
 
-        const blob = await res.blob();
-        setStatus(
-          `Range request success (${res.status}). Chunk bytes received: ${blob.size}. This button is for API chunk testing, not continuous playback.`,
-          res.status === 206 ? "ok" : "warn"
-        );
+        let autoSelected = null;
+
+        videos.forEach((video) => {
+          const item = document.createElement("div");
+          item.className = "item";
+          const title = video.title || "Untitled";
+          const id = video.videoId || "(missing videoId)";
+
+          if (!autoSelected && options.autoSelectTitle && title === options.autoSelectTitle && video.videoId) {
+            autoSelected = video.videoId;
+          }
+
+          item.innerHTML = `<div>${title}</div><div class="id">${id}</div>`;
+          item.addEventListener("click", () => {
+            if (!video.videoId) return;
+            videoIdEl.value = video.videoId;
+            playHls();
+          });
+          listEl.appendChild(item);
+        });
+
+        if (autoSelected) {
+          videoIdEl.value = autoSelected;
+        }
+
+        setStatus(`Loaded ${videos.length} video(s).`, "ok");
       } catch (err) {
-        setStatus(`Range request failed: ${err.message}`, "error");
+        listEl.innerHTML = '<div class="item">Failed to load list.</div>';
+        setStatus(`List fetch failed: ${err.message}`, "error");
+      } finally {
+        listBtn.disabled = false;
       }
-    }
-
-    function playRangeEndpointAuto() {
-      if (!requireAuth()) return;
-      const streamUrl = makeRangeStreamUrl();
-      if (!streamUrl) {
-        setStatus("Please provide Base URL and Video ID.", "warn");
-        return;
-      }
-
-      clearHls();
-      clearBlobUrl();
-      player.crossOrigin = "use-credentials";
-      streamUrlEl.textContent = streamUrl;
-      player.src = streamUrl;
-      player.load();
-      setResponseMeta("Request mode: direct video src\nEndpoint: /stream/range/{videoId}\nRange header: browser-managed");
-
-      player
-        .play()
-        .then(() => setStatus("Streaming started from range endpoint (browser handles byte range requests).", "ok"))
-        .catch(() => setStatus("Stream loaded. Press play if autoplay is blocked.", "warn"));
     }
 
     function playHls() {
-      if (!requireAuth()) return;
-      const hlsUrl = makeHlsMasterUrl();
-      if (!hlsUrl) {
-        setStatus("Please provide Base URL, Video ID, and valid HLS template.", "warn");
+      const id = videoIdEl.value.trim();
+      if (!id) {
+        setStatus("Video ID is required.", "warn");
         return;
       }
 
-      clearBlobUrl();
+      const masterUrl = makeMasterUrl(id);
+      streamUrlEl.textContent = masterUrl;
       clearHls();
-      streamUrlEl.textContent = hlsUrl;
 
       const nativeHls = player.canPlayType("application/vnd.apple.mpegurl");
       if (nativeHls) {
         player.crossOrigin = "use-credentials";
-        player.src = hlsUrl;
+        player.src = masterUrl;
         player.load();
-        setResponseMeta("Request mode: native HLS\nManifest: " + hlsUrl);
-        player
-          .play()
-          .then(() => setStatus("Native HLS playback started.", "ok"))
-          .catch(() => setStatus("HLS loaded. Press play if autoplay is blocked.", "warn"));
+        player.play().catch(() => {
+          setStatus("HLS loaded. Press play if autoplay is blocked.", "warn");
+        });
+        setStatus("Playing HLS (native support).", "ok");
         return;
       }
 
@@ -776,107 +374,42 @@
             xhr.withCredentials = true;
           }
         });
-        hlsInstance.loadSource(hlsUrl);
+        hlsInstance.loadSource(masterUrl);
         hlsInstance.attachMedia(player);
+
         hlsInstance.on(window.Hls.Events.MANIFEST_PARSED, () => {
-          setStatus("HLS manifest parsed. Starting playback...", "ok");
-          player.play().catch(() => setStatus("HLS loaded. Press play if autoplay is blocked.", "warn"));
-        });
-        hlsInstance.on(window.Hls.Events.ERROR, (_event, data) => {
-          setStatus(`HLS playback error: ${data?.details || "unknown"}`, "error");
-        });
-        setResponseMeta("Request mode: hls.js\nManifest: " + hlsUrl);
-        return;
-      }
-
-      setStatus("HLS is not supported in this browser.", "error");
-    }
-
-    async function loadVideoList(options = {}) {
-      if (!requireAuth()) return;
-      const base = normalizeBaseUrl(baseUrlEl.value.trim());
-      if (!base) {
-        setStatus("Please provide Base URL first.", "warn");
-        return;
-      }
-
-      setStatus("Fetching videos from GET /api/v1/videos ...");
-      listEl.hidden = false;
-      listEl.innerHTML = "";
-
-      try {
-        const res = await apiFetch(base, { method: "GET" });
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-
-        const videos = await res.json();
-        if (!Array.isArray(videos) || videos.length === 0) {
-          setStatus("No videos found.", "warn");
-          listEl.innerHTML = '<div class="item">No videos returned.</div>';
-          return;
-        }
-
-        let matchedVideo = null;
-        videos.forEach((video) => {
-          const id = video.videoId || "(missing id)";
-          const title = video.title || "Untitled";
-          if (!matchedVideo && options.autoSelectTitle && title === options.autoSelectTitle) {
-            matchedVideo = video;
-          }
-          const div = document.createElement("div");
-          div.className = "item";
-          div.innerHTML = `<div class="name">${title}</div><div class="id">${id}</div>`;
-          div.addEventListener("click", () => {
-            videoIdEl.value = id;
-            loadStream();
+          player.play().catch(() => {
+            setStatus("HLS loaded. Press play if autoplay is blocked.", "warn");
           });
-          listEl.appendChild(div);
+          setStatus("Playing HLS using hls.js.", "ok");
         });
 
-        if (matchedVideo?.videoId) {
-          videoIdEl.value = matchedVideo.videoId;
-        }
-        setStatus(`Loaded ${videos.length} video(s). Click any item to stream.`, "ok");
-      } catch (err) {
-        setStatus(`Could not fetch video list: ${err.message}`, "error");
-        listEl.innerHTML = '<div class="item">Request failed. Check backend/CORS/base URL.</div>';
+        hlsInstance.on(window.Hls.Events.ERROR, (_event, data) => {
+          setStatus(`HLS error: ${data && data.details ? data.details : "unknown"}`, "error");
+        });
+        return;
       }
+
+      setStatus("This browser does not support HLS playback.", "error");
     }
 
-    initHankoBtn.addEventListener("click", initHankoElement);
-    hankoApiUrlEl.addEventListener("change", () => {
-      setAuthStatus("Hanko API URL changed. Click Initialize Widget.", "warn");
-    });
-    validateSessionBtn.addEventListener("click", validateSession);
-    logoutBtn.addEventListener("click", logout);
-    hankoAuthEl.addEventListener("onAuthFlowCompleted", () => {
-      validateSession();
-    });
-    hankoAuthEl.addEventListener("onSessionCreated", () => {
-      validateSession();
-    });
     uploadBtn.addEventListener("click", uploadVideo);
-    loadBtn.addEventListener("click", loadStream);
-    playRangeAutoBtn.addEventListener("click", playRangeEndpointAuto);
+    listBtn.addEventListener("click", () => loadVideos());
     playHlsBtn.addEventListener("click", playHls);
-    loadRangeBtn.addEventListener("click", loadStreamWithRangeHeader);
-    listBtn.addEventListener("click", loadVideoList);
 
     videoIdEl.addEventListener("keydown", (e) => {
-      if (e.key === "Enter") loadStream();
+      if (e.key === "Enter") {
+        playHls();
+      }
     });
 
     player.addEventListener("error", () => {
-      setStatus("Player error: stream could not be loaded. Verify videoId and backend logs.", "error");
+      setStatus("Player failed to load stream. Check videoId and backend logs.", "error");
     });
 
-    window.addEventListener("beforeunload", () => {
-      clearBlobUrl();
-      clearHls();
-    });
-    setAppLocked(true);
-    setAuthStatus("Set Hanko API URL and click Initialize Widget.", "warn");
-    setEnvNote();
-    setHlsSupportNote();
+    window.addEventListener("beforeunload", clearHls);
+
+    loadVideos();
   </script>
 </body>
 </html>

@@ -1,0 +1,14 @@
+spring:
+  application:
+    name: spring-stream-backend
+
+  datasource:
+    url: "${SPRING_DATASOURCE_URL:jdbc:mysql://127.0.0.1:3307/streamdb?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC}"
+    username: "${SPRING_DATASOURCE_USERNAME:streamuser}"
+    password: "${SPRING_DATASOURCE_PASSWORD:streampass}"
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    database-platform: org.hibernate.dialect.MySQLDialect
