@@ -36,3 +36,12 @@ build/
 .env
 .env.local
 .env.*.local
+
+### Video Files ###
+Video/
+*.mp4
+*.mkv
+*.avi
+*.mov
+*.ts
+*.m3u8
