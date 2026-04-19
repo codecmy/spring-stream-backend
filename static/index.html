@@ -1,0 +1,1487 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>StreamFlix - Video Streaming</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-dark: #0a0a0a;
+      --bg-card: #141414;
+      --bg-elevated: #1f1f1f;
+      --bg-hover: #2a2a2a;
+      --text-primary: #ffffff;
+      --text-secondary: #a3a3a3;
+      --text-muted: #666666;
+      --accent: #e50914;
+      --accent-hover: #f40612;
+      --accent-glow: rgba(229, 9, 20, 0.4);
+      --border: #333333;
+      --success: #46d369;
+      --warning: #f5c518;
+      --overlay: rgba(0, 0, 0, 0.85);
+      --shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+      --radius-sm: 4px;
+      --radius: 8px;
+      --radius-lg: 12px;
+      --radius-xl: 16px;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: var(--bg-dark);
+      color: var(--text-primary);
+      min-height: 100vh;
+      line-height: 1.5;
+    }
+
+    a { text-decoration: none; color: inherit; }
+    button { font-family: inherit; cursor: pointer; border: none; outline: none; }
+    input { font-family: inherit; outline: none; }
+    ::-webkit-scrollbar { width: 8px; height: 8px; }
+    ::-webkit-scrollbar-track { background: var(--bg-dark); }
+    ::-webkit-scrollbar-thumb { background: var(--bg-elevated); border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: var(--bg-hover); }
+
+    .app-container {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Navigation */
+    .navbar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 68px;
+      background: linear-gradient(to bottom, rgba(0,0,0,0.9) 0%, transparent 100%);
+      display: flex;
+      align-items: center;
+      padding: 0 4%;
+      z-index: 1000;
+      transition: background 0.3s;
+    }
+
+    .navbar.scrolled {
+      background: var(--bg-dark);
+    }
+
+    .nav-logo {
+      font-size: 1.75rem;
+      font-weight: 800;
+      color: var(--accent);
+      letter-spacing: -1px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .nav-logo svg { height: 32px; }
+
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 24px;
+      margin-left: 40px;
+    }
+
+    .nav-link {
+      font-size: 0.9rem;
+      font-weight: 500;
+      color: var(--text-secondary);
+      transition: color 0.2s;
+    }
+
+    .nav-link:hover { color: var(--text-primary); }
+
+    .nav-right {
+      margin-left: auto;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .nav-search {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: transparent;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.2s;
+    }
+
+    .nav-search:hover { background: var(--bg-elevated); }
+
+    .nav-search svg { width: 20px; height: 20px; stroke: var(--text-primary); }
+
+    .nav-profile-btn {
+      width: 36px;
+      height: 36px;
+      border-radius: var(--radius-sm);
+      background: var(--accent);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 0.9rem;
+      color: white;
+    }
+
+    .nav-upload-btn {
+      padding: 8px 16px;
+      background: var(--accent);
+      color: white;
+      font-weight: 600;
+      border-radius: var(--radius-sm);
+      font-size: 0.85rem;
+      transition: background 0.2s, transform 0.2s;
+    }
+
+    .nav-upload-btn:hover {
+      background: var(--accent-hover);
+      transform: scale(1.02);
+    }
+
+    /* Main Content */
+    .main-content {
+      padding-top: 68px;
+      flex: 1;
+    }
+
+    /* Hero Section */
+    .hero {
+      height: 70vh;
+      min-height: 500px;
+      max-height: 80vh;
+      position: relative;
+      display: flex;
+      align-items: center;
+      overflow: hidden;
+    }
+
+    .hero-bg {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(to top, var(--bg-dark) 0%, transparent 50%),
+                  linear-gradient(to right, rgba(0,0,0,0.3) 0%, transparent 50%);
+    }
+
+    .hero-bg img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      filter: brightness(0.4);
+    }
+
+    .hero-content {
+      position: relative;
+      padding: 0 4%;
+      max-width: 600px;
+    }
+
+    .hero-title {
+      font-size: 4rem;
+      font-weight: 800;
+      line-height: 1.1;
+      margin-bottom: 16px;
+      text-shadow: 0 2px 8px rgba(0,0,0,0.5);
+    }
+
+    .hero-description {
+      font-size: 1.1rem;
+      color: var(--text-secondary);
+      margin-bottom: 24px;
+      line-height: 1.6;
+    }
+
+    .hero-buttons {
+      display: flex;
+      gap: 12px;
+    }
+
+    .hero-btn {
+      padding: 12px 28px;
+      font-size: 1.1rem;
+      font-weight: 600;
+      border-radius: var(--radius);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      transition: transform 0.2s, background 0.2s;
+    }
+
+    .hero-btn-primary {
+      background: var(--accent);
+      color: white;
+    }
+
+    .hero-btn-primary:hover {
+      background: var(--accent-hover);
+      transform: scale(1.02);
+    }
+
+    .hero-btn-secondary {
+      background: rgba(109, 109, 110, 0.7);
+      color: white;
+    }
+
+    .hero-btn-secondary:hover {
+      background: rgba(109, 109, 110, 0.5);
+      transform: scale(1.02);
+    }
+
+    /* Video Rows */
+    .video-section {
+      padding: 40px 0;
+    }
+
+    .section-header {
+      padding: 0 4%;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 20px;
+    }
+
+    .section-title {
+      font-size: 1.4rem;
+      font-weight: 600;
+    }
+
+    .section-view-all {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      transition: color 0.2s;
+    }
+
+    .section-view-all:hover { color: var(--text-primary); }
+
+    .video-row {
+      padding: 0 4%;
+    }
+
+    .video-slider {
+      display: flex;
+      gap: 10px;
+      overflow-x: auto;
+      padding: 20px 0;
+      scroll-behavior: smooth;
+    }
+
+    .video-slider::-webkit-scrollbar { display: none; }
+
+    .video-card {
+      flex: 0 0 auto;
+      width: 240px;
+      cursor: pointer;
+      transition: transform 0.3s, opacity 0.3s;
+    }
+
+    .video-card:hover {
+      transform: scale(1.05);
+      opacity: 1;
+    }
+
+    .video-thumbnail {
+      width: 100%;
+      aspect-ratio: 16/9;
+      background: var(--bg-elevated);
+      border-radius: var(--radius);
+      overflow: hidden;
+      position: relative;
+    }
+
+    .video-thumbnail img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transition: transform 0.3s;
+    }
+
+    .video-card:hover .video-thumbnail img {
+      transform: scale(1.05);
+    }
+
+    .video-play-overlay {
+      position: absolute;
+      inset: 0;
+      background: rgba(0,0,0,0.4);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      transition: opacity 0.2s;
+    }
+
+    .video-card:hover .video-play-overlay {
+      opacity: 1;
+    }
+
+    .video-play-icon {
+      width: 48px;
+      height: 48px;
+      background: rgba(255,255,255,0.9);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .video-play-icon svg {
+      width: 20px;
+      height: 20px;
+      fill: var(--bg-dark);
+      margin-left: 3px;
+    }
+
+    .video-info {
+      padding: 12px 0;
+    }
+
+    .video-title {
+      font-size: 0.95rem;
+      font-weight: 600;
+      margin-bottom: 4px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .video-meta {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .video-rating {
+      color: var(--success);
+      font-weight: 600;
+    }
+
+    /* Empty State */
+    .empty-state {
+      text-align: center;
+      padding: 80px 20px;
+    }
+
+    .empty-icon {
+      width: 80px;
+      height: 80px;
+      margin: 0 auto 24px;
+      background: var(--bg-elevated);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .empty-icon svg {
+      width: 40px;
+      height: 40px;
+      stroke: var(--text-muted);
+    }
+
+    .empty-title {
+      font-size: 1.5rem;
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+
+    .empty-description {
+      color: var(--text-secondary);
+      margin-bottom: 24px;
+    }
+
+    /* Auth Pages */
+    .auth-page {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--bg-dark);
+      padding: 20px;
+    }
+
+    .auth-card {
+      width: 100%;
+      max-width: 440px;
+      background: var(--bg-card);
+      border-radius: var(--radius-lg);
+      padding: 48px;
+      box-shadow: var(--shadow);
+    }
+
+    .auth-title {
+      font-size: 2rem;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+
+    .auth-subtitle {
+      color: var(--text-secondary);
+      margin-bottom: 32px;
+    }
+
+    .auth-form {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .form-label {
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+    }
+
+    .form-input {
+      padding: 16px;
+      background: var(--bg-elevated);
+      border: 2px solid transparent;
+      border-radius: var(--radius);
+      color: var(--text-primary);
+      font-size: 1rem;
+      transition: border-color 0.2s, background 0.2s;
+    }
+
+    .form-input:focus {
+      border-color: var(--accent);
+      background: var(--bg-card);
+    }
+
+    .form-input::placeholder {
+      color: var(--text-muted);
+    }
+
+    .auth-btn {
+      padding: 16px;
+      background: var(--accent);
+      color: white;
+      font-size: 1.1rem;
+      font-weight: 700;
+      border-radius: var(--radius);
+      margin-top: 16px;
+      transition: background 0.2s, transform 0.2s;
+    }
+
+    .auth-btn:hover {
+      background: var(--accent-hover);
+      transform: scale(1.01);
+    }
+
+    .auth-btn:disabled {
+      background: var(--text-muted);
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .auth-divider {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin: 24px 0;
+      color: var(--text-muted);
+      font-size: 0.85rem;
+    }
+
+    .auth-divider::before,
+    .auth-divider::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--border);
+    }
+
+    .auth-signup {
+      text-align: center;
+      color: var(--text-secondary);
+      margin-top: 24px;
+    }
+
+    .auth-signup a {
+      color: white;
+      font-weight: 600;
+    }
+
+    .auth-signup a:hover {
+      text-decoration: underline;
+    }
+
+    /* Error State */
+    .error-message {
+      padding: 12px 16px;
+      background: rgba(234, 17, 21, 0.15);
+      border: 1px solid var(--accent);
+      border-radius: var(--radius);
+      color: var(--accent);
+      font-size: 0.9rem;
+      margin-bottom: 16px;
+    }
+
+    /* Upload Page */
+    .upload-page {
+      min-height: 100vh;
+      padding-top: 68px;
+    }
+
+    .upload-container {
+      max-width: 600px;
+      margin: 0 auto;
+      padding: 40px 20px;
+    }
+
+    .upload-title {
+      font-size: 2rem;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+
+    .upload-subtitle {
+      color: var(--text-secondary);
+      margin-bottom: 40px;
+    }
+
+    .upload-dropzone {
+      border: 2px dashed var(--border);
+      border-radius: var(--radius-lg);
+      padding: 60px 40px;
+      text-align: center;
+      cursor: pointer;
+      transition: border-color 0.2s, background 0.2s;
+    }
+
+    .upload-dropzone:hover,
+    .upload-dropzone.dragover {
+      border-color: var(--accent);
+      background: rgba(229, 9, 20, 0.05);
+    }
+
+    .upload-dropzone svg {
+      width: 64px;
+      height: 64px;
+      stroke: var(--text-muted);
+      margin-bottom: 16px;
+    }
+
+    .upload-dropzone-title {
+      font-size: 1.25rem;
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+
+    .upload-dropzone-subtitle {
+      color: var(--text-secondary);
+      font-size: 0.9rem;
+    }
+
+    .upload-file-input {
+      display: none;
+    }
+
+    .upload-preview {
+      margin-top: 24px;
+      padding: 20px;
+      background: var(--bg-card);
+      border-radius: var(--radius);
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .upload-preview-icon {
+      width: 56px;
+      height: 56px;
+      background: var(--accent);
+      border-radius: var(--radius);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .upload-preview-icon svg {
+      width: 28px;
+      height: 28px;
+      stroke: white;
+    }
+
+    .upload-preview-info {
+      flex: 1;
+    }
+
+    .upload-preview-name {
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+
+    .upload-preview-size {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+    }
+
+    .upload-preview-remove {
+      width: 36px;
+      height: 36px;
+      background: var(--bg-elevated);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.2s;
+    }
+
+    .upload-preview-remove:hover {
+      background: var(--accent);
+    }
+
+    .upload-preview-remove svg {
+      width: 18px;
+      height: 18px;
+      stroke: var(--text-primary);
+    }
+
+    .upload-progress {
+      margin-top: 24px;
+      display: none;
+    }
+
+    .upload-progress.active {
+      display: block;
+    }
+
+    .progress-bar {
+      height: 4px;
+      background: var(--bg-elevated);
+      border-radius: 2px;
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: var(--accent);
+      border-radius: 2px;
+      transition: width 0.3s;
+      width: 0%;
+    }
+
+    .progress-text {
+      margin-top: 8px;
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      text-align: center;
+    }
+
+    /* Player Page */
+    .player-page {
+      min-height: 100vh;
+      background: var(--bg-dark);
+      display: flex;
+      flex-direction: column;
+    }
+
+    .player-back {
+      position: fixed;
+      top: 20px;
+      left: 20px;
+      z-index: 100;
+      width: 44px;
+      height: 44px;
+      background: rgba(0, 0, 0, 0.6);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.2s, transform 0.2s;
+    }
+
+    .player-back:hover {
+      background: var(--accent);
+      transform: scale(1.1);
+    }
+
+    .player-back svg {
+      width: 24px;
+      height: 24px;
+      stroke: white;
+    }
+
+    .player-video {
+      width: 100%;
+      aspect-ratio: 16/9;
+      background: black;
+      max-height: 70vh;
+    }
+
+    .player-video video {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+    }
+
+    .player-info {
+      padding: 40px 4%;
+    }
+
+    .player-title {
+      font-size: 2.5rem;
+      font-weight: 800;
+      margin-bottom: 16px;
+    }
+
+    .player-meta {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      color: var(--text-secondary);
+      font-size: 0.95rem;
+      margin-bottom: 24px;
+    }
+
+    .player-rating {
+      padding: 4px 10px;
+      background: rgba(255,255,255,0.1);
+      border-radius: var(--radius-sm);
+      font-weight: 600;
+      color: var(--success);
+    }
+
+    .player-description {
+      font-size: 1.1rem;
+      color: var(--text-secondary);
+      line-height: 1.7;
+      max-width: 800px;
+    }
+
+    /* Search Modal */
+    .search-modal {
+      position: fixed;
+      inset: 0;
+      background: var(--bg-dark);
+      z-index: 2000;
+      display: none;
+      flex-direction: column;
+    }
+
+    .search-modal.active {
+      display: flex;
+    }
+
+    .search-header {
+      display: flex;
+      align-items: center;
+      padding: 20px 4%;
+      gap: 20px;
+    }
+
+    .search-close {
+      width: 44px;
+      height: 44px;
+      background: var(--bg-elevated);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .search-close svg {
+      width: 24px;
+      height: 24px;
+      stroke: var(--text-secondary);
+    }
+
+    .search-input {
+      flex: 1;
+      padding: 16px 20px;
+      background: var(--bg-card);
+      border-radius: var(--radius);
+      font-size: 1.2rem;
+      color: var(--text-primary);
+    }
+
+    .search-results {
+      flex: 1;
+      overflow-y: auto;
+      padding: 20px 4%;
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+      gap: 20px;
+      align-content: start;
+    }
+
+    /* Loading Skeleton */
+    .skeleton {
+      background: linear-gradient(90deg, var(--bg-elevated) 0%, var(--bg-hover) 50%, var(--bg-elevated) 100%);
+      background-size: 200% 100%;
+      animation: skeleton 1.5s infinite;
+      border-radius: var(--radius);
+    }
+
+    .skeleton-thumbnail {
+      aspect-ratio: 16/9;
+      border-radius: var(--radius);
+    }
+
+    .skeleton-title {
+      height: 20px;
+      margin-top: 12px;
+    }
+
+    .skeleton-meta {
+      height: 14px;
+      width: 60%;
+      margin-top: 8px;
+    }
+
+    @keyframes skeleton {
+      0% { background-position: 200% 0; }
+      100% { background-position: -200% 0; }
+    }
+
+    /* Toast Notifications */
+    .toast-container {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      z-index: 3000;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .toast {
+      padding: 16px 24px;
+      background: var(--bg-elevated);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      animation: toast-in 0.3s ease;
+    }
+
+    .toast.success { border-left: 4px solid var(--success); }
+    .toast.error { border-left: 4px solid var(--accent); }
+
+    @keyframes toast-in {
+      from { transform: translateX(100%); opacity: 0; }
+      to { transform: translateX(0); opacity: 1; }
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .hero-title { font-size: 2.5rem; }
+      .hero-description { font-size: 1rem; }
+      .hero-btn { padding: 10px 20px; font-size: 1rem; }
+      .video-card { width: 160px; }
+      .nav-links { display: none; }
+      .auth-card { padding: 32px 24px; }
+      .player-title { font-size: 1.75rem; }
+    }
+  </style>
+</head>
+<body>
+  <div id="app"></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+  <script>
+    const API_BASE = '/api/v1/videos';
+    const HANKO_BASE_URL = 'https://d655128a-1ef2-4249-9ce7-64da57162e65.hanko.io';
+
+    const icons = {
+      logo: '<svg viewBox="0 0 111 32" fill="none"><path d="M10.5 4.5C10.5 2.5 12 1.5 14 1.5H18C20 1.5 21.5 2.5 21.5 4.5V14.5C21.5 16.5 20 17.5 18 17.5H14C12 17.5 10.5 16.5 10.5 14.5V4.5Z" fill="white"/><path d="M27 1.5H31C33 1.5 34 2.5 34 5C34 7 33 8.5 31 8.5H27V1.5Z" fill="white"/><path d="M38 1.5H42C45 1.5 47 3 47 5.5C47 7.5 45.5 9 43.5 9H42V17.5C42 19.5 40 21 38 21C35.5 21 34 19.5 34 17V12.5H38C40 12.5 41.5 11 41.5 9C41.5 7 40 5.5 38 5.5H34V17.5C34 19.5 32.5 21 30 21C27.5 21 26 19.5 26 17V8.5C26 6 28 4.5 30 4.5H34V1.5H38Z" fill="white"/><path d="M52 1.5H56C58.5 1.5 60 3 60 5.5C60 7.5 58.5 9 56 9H52V1.5Z" fill="white"/><path d="M64 1.5H83C86 1.5 88 3.5 88 6C88 8 86.5 9.5 84.5 10C86.5 10.5 88 12 88 14.5C88 17.5 85.5 21 82.5 21H68C65 21 63 19 63 16.5C63 14.5 64.5 13 66.5 12.5C64.5 12 63 10.5 63 8.5C63 5.5 65.5 3.5 68.5 3.5H82V1.5H64Z" fill="white"/><path d="M94 2H110C110 2 111 2.5 111 4C111 9 108 14.5 101 22.5C98 26 96 27.5 94 27.5C92 27.5 90.5 26 90.5 24C90.5 22 91.5 21 94 21C95 21 96 21.5 96 21.5L95 20H94V19C94 19 95 20 97 20C99 20 100 19 100 17.5C100 16 99 15 97 15H94V12C94 12 95 13 97 13C100 13 101 11 101 9C101 7 99 6 97 6H94V2Z" fill="white"/></svg>',
+      search: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>',
+      play: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>',
+      plus: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>',
+      upload: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>',
+      back: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>',
+      close: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>',
+      check: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>',
+      user: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>',
+      film: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="20" rx="2.18" ry="2.18"/><line x1="7" y1="2" x2="7" y2="22"/><line x1="17" y1="2" x2="17" y2="22"/><line x1="2" y1="12" x2="22" y2="12"/><line x1="2" y1="7" x2="7" y2="7"/><line x1="2" y1="17" x2="7" y2="17"/><line x1="17" y1="7" x2="22" y2="7"/><line x1="17" y1="17" x2="22" y2="17"/></svg>'
+    };
+
+    const app = document.getElementById('app');
+    let currentUser = null;
+    let videos = [];
+    let currentVideo = null;
+    let hls = null;
+
+    function formatFileSize(bytes) {
+      if (bytes === 0) return '0 Bytes';
+      const k = 1024;
+      const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+      const i = Math.floor(Math.log(bytes) / Math.log(k));
+      return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    }
+
+    function showToast(message, type = 'success') {
+      const container = document.querySelector('.toast-container') || createToastContainer();
+      const toast = document.createElement('div');
+      toast.className = `toast ${type}`;
+      toast.innerHTML = `
+        ${type === 'success' ? icons.check : icons.close}
+        <span>${message}</span>
+      `;
+      container.appendChild(toast);
+      setTimeout(() => toast.remove(), 4000);
+    }
+
+    function createToastContainer() {
+      const div = document.createElement('div');
+      div.className = 'toast-container';
+      document.body.appendChild(div);
+      return div;
+    }
+
+    async function fetchVideos() {
+      try {
+        const res = await fetch(API_BASE, { credentials: 'include' });
+        if (!res.ok) throw new Error('Failed to fetch');
+        videos = await res.json();
+        return videos;
+      } catch (e) {
+        console.error(e);
+        return [];
+      }
+    }
+
+    function hasHankoCookie() {
+      const hankoCookie = document.cookie.split(';').find(c => c.trim().startsWith('hanko='));
+      if (!hankoCookie) return false;
+      
+      const token = hankoCookie.split('=')[1];
+      return token && token !== '';
+    }
+
+    async function uploadVideo(file, title, description) {
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('title', title);
+      formData.append('description', description);
+
+      const xhr = new XMLHttpRequest();
+      
+      return new Promise((resolve, reject) => {
+        xhr.upload.addEventListener('progress', (e) => {
+          if (e.lengthComputable) {
+            const percent = (e.loaded / e.total) * 100;
+            updateProgress(percent);
+          }
+        });
+
+        xhr.addEventListener('load', () => {
+          if (xhr.status >= 200 && xhr.status < 300) {
+            resolve();
+          } else {
+            reject(new Error('Upload failed'));
+          }
+        });
+
+        xhr.addEventListener('error', () => reject(new Error('Upload failed')));
+
+        xhr.open('POST', API_BASE);
+        xhr.withCredentials = true;
+        xhr.send(formData);
+      });
+    }
+
+    let progressCallback = () => {};
+    function updateProgress(percent) {
+      progressCallback(percent);
+    }
+
+    function setProgressCallback(cb) {
+      progressCallback = cb;
+    }
+
+    function renderNavbar(scrolled = false) {
+      return `
+        <nav class="navbar ${scrolled ? 'scrolled' : ''}">
+          <a href="#" class="nav-logo" onclick="navigate('home')">
+            ${icons.logo}
+          </a>
+          <div class="nav-links">
+            <a href="#" class="nav-link" onclick="navigate('home')">Home</a>
+            <a href="#" class="nav-link" onclick="navigate('browse')">TV Shows</a>
+            <a href="#" class="nav-link" onclick="navigate('browse')">Movies</a>
+            <a href="#" class="nav-link" onclick="navigate('browse')">New & Popular</a>
+          </div>
+          <div class="nav-right">
+            <button class="nav-search" onclick="openSearch()">
+              ${icons.search}
+            </button>
+            <button class="nav-upload-btn" onclick="navigate('upload')">Upload</button>
+            <button class="nav-profile-btn" onclick="navigate('login')">${icons.user}</button>
+          </div>
+        </nav>
+      `;
+    }
+
+    function renderHome() {
+      const featuredVideo = videos[0];
+      
+      return `
+        <div class="app-container">
+          ${renderNavbar(window.scrollY > 50)}
+          <main class="main-content">
+            ${featuredVideo ? `
+              <div class="hero" onclick="playVideo('${featuredVideo.videoId}')">
+                <div class="hero-bg">
+                  <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 9'%3E%3Crect fill='%23e50914' width='16' height='9'/%3E%3C/svg%3E" alt="">
+                </div>
+                <div class="hero-content">
+                  <h1 class="hero-title">${featuredVideo.title}</h1>
+                  <p class="hero-description">${featuredVideo.videoDescription}</p>
+                  <div class="hero-buttons">
+                    <button class="hero-btn hero-btn-primary" onclick="event.stopPropagation(); playVideo('${featuredVideo.videoId}')">
+                      ${icons.play}
+                      <span>Play</span>
+                    </button>
+                    <button class="hero-btn hero-btn-secondary" onclick="event.stopPropagation(); showMoreInfo('${featuredVideo.videoId}')">
+                      <span>More Info</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ` : ''}
+            
+            <div class="video-section">
+              <div class="section-header">
+                <h2 class="section-title">Trending Now</h2>
+                <a href="#" class="section-view-all" onclick="navigate('browse')">View All</a>
+              </div>
+              <div class="video-row">
+                <div class="video-slider">
+                  ${videos.length === 0 ? renderEmptyState() : videos.map(v => renderVideoCard(v)).join('')}
+                </div>
+              </div>
+            </div>
+          </main>
+          ${renderFooter()}
+        </div>
+      `;
+    }
+
+    function renderVideoCard(video) {
+      return `
+        <div class="video-card" onclick="playVideo('${video.videoId}')">
+          <div class="video-thumbnail">
+            <svg viewBox="0 0 16 9" style="width:100%;height:100%;background:linear-gradient(135deg, #e50914 0%, #221111 100%);">
+              <text x="50%" y="50%" fill="white" font-size="2" text-anchor="middle" dominant-baseline="middle" font-family="system-ui">▶</text>
+            </svg>
+            <div class="video-play-overlay">
+              <div class="video-play-icon">
+                <svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+              </div>
+            </div>
+          </div>
+          <div class="video-info">
+            <h3 class="video-title">${video.title}</h3>
+            <div class="video-meta">
+              <span class="video-rating">HD</span>
+              <span>${video.contentType || 'Video'}</span>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderEmptyState() {
+      return `
+        <div class="empty-state">
+          <div class="empty-icon">
+            ${icons.film}
+          </div>
+          <h2 class="empty-title">No videos yet</h2>
+          <p class="empty-description">Upload your first video to get started</p>
+          <button class="hero-btn hero-btn-primary" onclick="navigate('upload')">
+            ${icons.plus}
+            <span>Upload Video</span>
+          </button>
+        </div>
+      `;
+    }
+
+    function renderLogin() {
+      return `
+        <div class="auth-page">
+          <div class="auth-card">
+            <h1 class="auth-title">Sign In</h1>
+            <p class="auth-subtitle">Welcome back! Please sign in to continue.</p>
+            
+            <div id="login-error" class="error-message" style="display:none;"></div>
+            
+            <form class="auth-form" onsubmit="handleLogin(event)">
+              <div class="form-group">
+                <label class="form-label">Email</label>
+                <input type="email" class="form-input" id="login-email" placeholder="Enter your email" required>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Password</label>
+                <input type="password" class="form-input" id="login-password" placeholder="Enter your password" required>
+              </div>
+              <button type="submit" class="auth-btn" id="login-btn">Sign In</button>
+            </form>
+            
+            <div class="auth-divider">or</div>
+            
+            <button class="auth-btn" style="background:var(--bg-elevated);" onclick="window.location.href='${HANKO_BASE_URL}/login'">
+              Continue with Hanko
+            </button>
+            
+            <p class="auth-signup">
+              New to StreamFlix? <a href="#" onclick="navigate('register')">Sign up now</a>
+            </p>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderRegister() {
+      return `
+        <div class="auth-page">
+          <div class="auth-card">
+            <h1 class="auth-title">Create Account</h1>
+            <p class="auth-subtitle">Join StreamFlix to start streaming.</p>
+            
+            <div id="register-error" class="error-message" style="display:none;"></div>
+            
+            <form class="auth-form" onsubmit="handleRegister(event)">
+              <div class="form-group">
+                <label class="form-label">Email</label>
+                <input type="email" class="form-input" id="register-email" placeholder="Enter your email" required>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Password</label>
+                <input type="password" class="form-input" id="register-password" placeholder="Create a password" required>
+              </div>
+              <button type="submit" class="auth-btn" id="register-btn">Create Account</button>
+            </form>
+            
+            <p class="auth-signup">
+              Already have an account? <a href="#" onclick="navigate('login')">Sign in</a>
+            </p>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderUpload() {
+      return `
+        <div class="upload-page">
+          ${renderNavbar(true)}
+          <div class="upload-container">
+            <h1 class="upload-title">Upload Video</h1>
+            <p class="upload-subtitle">Share your video with the world.</p>
+            
+            <div class="upload-dropzone" onclick="document.getElementById('file-input').click()">
+              ${icons.upload}
+              <h3 class="upload-dropzone-title">Drag and drop your video here</h3>
+              <p class="upload-dropzone-subtitle">or click to browse (MP4, MKV, AVI, MOV)</p>
+            </div>
+            <input type="file" id="file-input" class="upload-file-input" accept="video/*" onchange="handleFileSelect(event)">
+            
+            <div id="preview-container" style="display:none;">
+              <div class="upload-preview">
+                <div class="upload-preview-icon">
+                  ${icons.film}
+                </div>
+                <div class="upload-preview-info">
+                  <div class="upload-preview-name" id="preview-name"></div>
+                  <div class="upload-preview-size" id="preview-size"></div>
+                </div>
+                <button class="upload-preview-remove" onclick="clearFile()">
+                  ${icons.close}
+                </button>
+              </div>
+            </div>
+            
+            <div id="upload-form" style="display:none;">
+              <div class="form-group" style="margin-top:24px;">
+                <label class="form-label">Title</label>
+                <input type="text" class="form-input" id="video-title" placeholder="Enter video title" required>
+              </div>
+              <div class="form-group" style="margin-top:16px;">
+                <label class="form-label">Description</label>
+                <input type="text" class="form-input" id="video-description" placeholder="Enter video description" required>
+              </div>
+              <button type="button" class="auth-btn" onclick="handleUpload()">Upload</button>
+            </div>
+            
+            <div class="upload-progress" id="progress-container">
+              <div class="progress-bar">
+                <div class="progress-fill" id="progress-fill"></div>
+              </div>
+              <p class="progress-text" id="progress-text">Uploading... 0%</p>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderPlayer(videoId) {
+      const video = videos.find(v => v.videoId === videoId);
+      if (!video) return renderHome();
+      
+      return `
+        <div class="player-page">
+          <button class="player-back" onclick="navigate('home')">
+            ${icons.back}
+          </button>
+          <div class="player-video" id="player-container">
+            <video id="video-player" controls crossorigin="anonymous"></video>
+          </div>
+          <div class="player-info">
+            <h1 class="player-title">${video.title}</h1>
+            <div class="player-meta">
+              <span class="player-rating">HD</span>
+              <span>${video.contentType}</span>
+            </div>
+            <p class="player-description">${video.videoDescription}</p>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderFooter() {
+      return `
+        <footer style="padding:40px 4%;text-align:center;color:var(--text-muted);font-size:0.85rem;margin-top:60px;">
+          <p>© 2026 StreamFlix. Built with Spring Boot & Hanko Auth.</p>
+        </footer>
+      `;
+    }
+
+    function renderSearch() {
+      return `
+        <div class="search-modal active">
+          <div class="search-header">
+            <button class="search-close" onclick="closeSearch()">
+              ${icons.close}
+            </button>
+            <input type="text" class="search-input" id="search-input" placeholder="Search videos..." oninput="searchVideos(this.value)">
+          </div>
+          <div class="search-results" id="search-results">
+            ${videos.map(v => renderVideoCard(v)).join('')}
+          </div>
+        </div>
+      `;
+    }
+
+    let selectedFile = null;
+
+    function handleFileSelect(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+      
+      selectedFile = file;
+      document.getElementById('preview-name').textContent = file.name;
+      document.getElementById('preview-size').textContent = formatFileSize(file.size);
+      document.getElementById('preview-container').style.display = 'flex';
+      document.getElementById('upload-form').style.display = 'block';
+    }
+
+    function clearFile() {
+      selectedFile = null;
+      document.getElementById('file-input').value = '';
+      document.getElementById('preview-container').style.display = 'none';
+      document.getElementById('upload-form').style.display = 'none';
+    }
+
+    async function handleUpload() {
+      if (!selectedFile) return;
+      
+      const title = document.getElementById('video-title').value;
+      const description = document.getElementById('video-description').value;
+      
+      if (!title || !description) {
+        showToast('Please fill all fields', 'error');
+        return;
+      }
+
+      const progressContainer = document.getElementById('progress-container');
+      const progressFill = document.getElementById('progress-fill');
+      const progressText = document.getElementById('progress-text');
+      const uploadForm = document.getElementById('upload-form');
+      
+      progressContainer.classList.add('active');
+      uploadForm.style.display = 'none';
+      
+      setProgressCallback((percent) => {
+        progressFill.style.width = percent + '%';
+        progressText.textContent = `Uploading... ${Math.round(percent)}%`;
+      });
+
+      try {
+        await uploadVideo(selectedFile, title, description);
+        showToast('Video uploaded successfully!');
+        videos = await fetchVideos();
+        clearFile();
+        progressContainer.classList.remove('active');
+        navigate('home');
+      } catch (e) {
+        showToast('Upload failed: ' + e.message, 'error');
+        progressContainer.classList.remove('active');
+        uploadForm.style.display = 'block';
+      }
+    }
+
+    function openSearch() {
+      app.innerHTML = renderSearch();
+      document.getElementById('search-input').focus();
+    }
+
+    function closeSearch() {
+      navigate('home');
+    }
+
+    function searchVideos(query) {
+      const results = videos.filter(v => 
+        v.title?.toLowerCase().includes(query.toLowerCase()) ||
+        v.videoDescription?.toLowerCase().includes(query.toLowerCase())
+      );
+      document.getElementById('search-results').innerHTML = results.map(v => renderVideoCard(v)).join('') || '<p style="color:var(--text-muted);">No results found</p>';
+    }
+
+    async function handleLogin(e) {
+      e.preventDefault();
+      showToast('Redirecting to Hanko authentication...');
+      window.location.href = HANKO_BASE_URL + '/login';
+    }
+
+    async function handleRegister(e) {
+      e.preventDefault();
+      showToast('Redirecting to Hanko registration...');
+      window.location.href = HANKO_BASE_URL + '/register';
+    }
+
+    async function logout() {
+      document.cookie = 'hanko=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+      document.cookie = 'hanko=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=' + window.location.hostname + ';';
+      currentUser = null;
+      showToast('Logged out successfully');
+      app.innerHTML = renderLogin();
+    }
+
+    function navigate(page, data = null) {
+      if (hls) {
+        hls.destroy();
+        hls = null;
+      }
+      
+      window.scrollTo(0, 0);
+      
+      switch(page) {
+        case 'home':
+          app.innerHTML = renderHome();
+          window.addEventListener('scroll', handleScroll);
+          break;
+        case 'login':
+          app.innerHTML = renderLogin();
+          break;
+        case 'register':
+          app.innerHTML = renderRegister();
+          break;
+        case 'upload':
+          app.innerHTML = renderUpload();
+          break;
+        case 'player':
+          app.innerHTML = renderPlayer(data);
+          initPlayer(data);
+          break;
+        case 'browse':
+          app.innerHTML = `
+            <div class="app-container">
+              ${renderNavbar(true)}
+              <main class="main-content" style="padding-top:100px;">
+                <div class="video-section">
+                  <div class="section-header">
+                    <h2 class="section-title">All Videos</h2>
+                  </div>
+                  <div class="video-row">
+                    <div class="video-slider">
+                      ${videos.map(v => renderVideoCard(v)).join('')}
+                    </div>
+                  </div>
+                </div>
+              </main>
+              ${renderFooter()}
+            </div>
+          `;
+          break;
+      }
+    }
+
+    function handleScroll() {
+      const navbar = document.querySelector('.navbar');
+      if (navbar) {
+        navbar.classList.toggle('scrolled', window.scrollY > 50);
+      }
+    }
+
+    function playVideo(videoId) {
+      navigate('player', videoId);
+    }
+
+    function showMoreInfo(videoId) {
+      const video = videos.find(v => v.videoId === videoId);
+      if (video) {
+        // Could show modal
+      }
+    }
+
+    async function initPlayer(videoId) {
+      const video = videos.find(v => v.videoId === videoId);
+      if (!video) return;
+      
+      const player = document.getElementById('video-player');
+      if (!player) return;
+      
+      const hlsUrl = `${API_BASE}/${encodeURIComponent(videoId)}/master.m3u8`;
+      
+      if (Hls.isSupported()) {
+        hls = new Hls({
+          enableWorker: true,
+          lowLatencyMode: false
+        });
+        hls.loadSource(hlsUrl);
+        hls.attachMedia(player);
+        
+        hls.on(Hls.Events.MANIFEST_PARSED, () => {
+          player.play().catch(() => {});
+        });
+      } else if (player.canPlayType('application/vnd.apple.mpegurl')) {
+        player.src = hlsUrl;
+        player.play().catch(() => {});
+      }
+    }
+
+    async function init() {
+      videos = await fetchVideos();
+      app.innerHTML = renderHome();
+      window.addEventListener('scroll', handleScroll);
+    }
+
+    init();
+  </script>
+</body>
+</html>
