@@ -14,6 +14,52 @@ A full-stack video streaming application built with Spring Boot, featuring HLS v
 
 ## Architecture
 
+### Video Transcoding Pipeline
+
+![Video Transcoding Pipeline](./src/main/resources/static/Screenshot%202026-03-30%20120250.png)
+
+The video transcoding pipeline follows an asynchronous, event-driven architecture:
+
+1. **Upload**: Consumer uploads video through API servers
+2. **Storage**: Video is pushed to MinIO local bucket
+3. **Metadata**: Video metadata is stored in MySQL database
+4. **Queue**: Upload triggers a message to RabbitMQ (decoupled & async)
+5. **Transcode**: Multiple consumer workers (docker containers) fetch from queue, transcode videos using FFmpeg
+6. **Output**: Transcoded HLS segments and playlists are stored in MinIO central storage bucket
+
+### MinIO Bucket Structure
+
+![MinIO Bucket Structure](./src/main/resources/static/Screenshot%202026-03-30%20131618.png)
+
+MinIO stores objects in two main buckets:
+
+| Bucket | Purpose | Contents |
+|--------|---------|----------|
+| `videos` | Raw video storage | Uploaded source video files |
+| `video-hls` | HLS streaming assets | Transcoded `.m3u8` playlists and `.ts` segments |
+
+Each transcoded video is organized in a folder named after the original file UUID:
+```
+video-hls/
+├── {uuid}_filename.mp4/
+│   ├── master.m3u8        # HLS master playlist
+│   ├── segment_000.ts     # Video segment 1
+│   ├── segment_001.ts     # Video segment 2
+│   └── ...
+```
+
+### System Overview
+
+```
+┌─────────────┐     ┌───────────┐     ┌────────────┐
+│   Frontend  │────▶│  nginx    │────▶│  Backend   │
+│   (HTML/JS) │     │ :80       │     │  :8081     │
+└─────────────┘     └───────────┘     └────────────┘
+                                               │
+                    ┌───────────┐     ┌────────────┤
+                    │  MinIO    │◀────│  (API)     │
+                    │ :9000    │     └────────────┘
+                    └───────────
 ```
 ┌─────────────┐     ┌───────────┐     ┌────────────┐
 │   Frontend  │────▶│  nginx    │────▶│  Backend   │
