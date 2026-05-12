@@ -20,15 +20,12 @@ public class HankoSessionFilter extends OncePerRequestFilter {
         this.validator = validator;
     }
 
-@Override
+    @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
         String path = request.getRequestURI();
-        String method = request.getMethod();
 
-        if (HttpMethod.GET.matches(method)) {
-            if (path.equals("/api/v1/videos") || path.startsWith("/api/v1/videos/")) {
-                return true;
-            }
+        if (path.equals("/api/v1/videos") || path.startsWith("/api/v1/videos/")) {
+            return true;
         }
         if (path.equals("/api/health") || path.equals("/health") || path.equals("/actuator/health")) {
             return true;

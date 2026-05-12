@@ -8,6 +8,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.amqp.core.Queue;
 import org.springframework.amqp.core.Binding;
 import org.springframework.amqp.core.BindingBuilder;
+import org.springframework.amqp.core.QueueBuilder;
 @Configuration
 public class RabbitConfig {
     public static final String EXCHANGE = "video.exchange";
@@ -21,7 +22,10 @@ public class RabbitConfig {
 
     @Bean
     public Queue queue() {
-        return new Queue(QUEUE, true);
+        return QueueBuilder.durable(QUEUE)
+                .deadLetterExchange("")
+                .deadLetterRoutingKey("video.processing.dlq")
+                .build();
     }
     @Bean
     public Binding binding(Queue queue, DirectExchange exchange) {

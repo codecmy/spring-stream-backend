@@ -25,4 +25,6 @@ public interface VideoServices{
     String processVideo(String videoId) throws IOException;
     InputStream getVideoSegement(String videoId,String segmentNo) throws IOException, ServerException, InsufficientDataException, ErrorResponseException, NoSuchAlgorithmException, InvalidKeyException, InvalidResponseException, XmlParserException, InternalException;
     Resource getm3u8(String videoId) throws IOException;
+    Resource getQualityPlaylist(String videoId, String quality) throws IOException;
+    InputStream getVideoSegment(String videoId, String segmentNo, String quality) throws IOException, ServerException, InsufficientDataException, ErrorResponseException, NoSuchAlgorithmException, InvalidKeyException, InvalidResponseException, XmlParserException, InternalException;
 }

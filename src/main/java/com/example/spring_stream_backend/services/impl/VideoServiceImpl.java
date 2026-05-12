@@ -115,6 +115,54 @@ public class VideoServiceImpl implements VideoServices {
         }
     }
     @Override
+    public Resource getQualityPlaylist(String videoId, String quality) throws FileNotFoundException {
+        Optional<Video> byId = videoRepositories.findById(videoId);
+        if (byId.isEmpty()) {
+            throw new FileNotFoundException("Video not found for id: " + videoId);
+        }
+        String filepath = byId.get().getFilepath();
+        String objectName = filepath.replaceFirst("raw/","") + "/" + quality + "/index.m3u8";
+        try {
+            return new InputStreamResource(minioClient.getObject(
+                    GetObjectArgs.builder()
+                            .bucket(hlsBucketName)
+                            .object(objectName)
+                            .build()));
+        } catch (ErrorResponseException | InsufficientDataException | InternalException | InvalidKeyException |
+                 InvalidResponseException | IOException | NoSuchAlgorithmException | ServerException |
+                 XmlParserException e) {
+            throw new FileNotFoundException("Quality playlist not found: " + quality + " for video: " + videoId);
+        }
+    }
+
+    @Override
+    public InputStream getVideoSegment(String videoId, String segmentNo, String quality) throws IOException, ServerException, InsufficientDataException, ErrorResponseException, NoSuchAlgorithmException, InvalidKeyException, InvalidResponseException, XmlParserException, InternalException {
+        Optional<Video> byId = videoRepositories.findById(videoId);
+        if (byId.isEmpty()) {
+            throw new FileNotFoundException("Video not found for id: " + videoId);
+        }
+        String rawObjectName = byId.get().getFilepath();
+        if (rawObjectName == null || rawObjectName.isBlank()) {
+            throw new FileNotFoundException("No object path stored for video id: " + videoId);
+        }
+        String normalizedSegmentName = segmentNo.endsWith(".ts") ? segmentNo : segmentNo + ".ts";
+        String objectName = rawObjectName.replaceFirst("raw/", "") + "/" + quality + "/" + normalizedSegmentName;
+        try {
+            return minioClient.getObject(
+                    GetObjectArgs.builder()
+                            .bucket(hlsBucketName)
+                            .object(objectName)
+                            .build());
+        } catch (ErrorResponseException e) {
+            if (!"NoSuchKey".equalsIgnoreCase(e.errorResponse().code())) {
+                throw e;
+            }
+        }
+        throw new FileNotFoundException("Quality segment not found for video: " + videoId +
+                ", quality: " + quality + ", segment: " + normalizedSegmentName);
+    }
+
+    @Override
     public InputStream getVideoSegement(String videoId,String segmentNo) throws IOException, ServerException, InsufficientDataException, ErrorResponseException, NoSuchAlgorithmException, InvalidKeyException, InvalidResponseException, XmlParserException, InternalException {
         Optional<Video> byId = videoRepositories.findById(videoId);
         if (byId.isEmpty()) {

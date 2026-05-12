@@ -93,6 +93,47 @@ public class VideoController {
             return ResponseEntity.internalServerError().build();
         }
     }
+    @GetMapping("/{videoId}/{quality}/index.m3u8")
+    public ResponseEntity<Resource> getQualityPlaylist(
+            @PathVariable String videoId,
+            @PathVariable String quality
+    ){
+        try {
+            Resource resource = videoServices.getQualityPlaylist(videoId, quality);
+            if (resource == null) {
+                throw new FileNotFoundException("Quality playlist not found");
+            }
+            return ResponseEntity
+                    .ok()
+                    .header(HttpHeaders.CONTENT_TYPE, "application/vnd.apple.mpegurl")
+                    .body(resource);
+        } catch (FileNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+        } catch (IOException e) {
+            return ResponseEntity.internalServerError().build();
+        }
+    }
+
+    @GetMapping("/{videoId}/{quality}/{segment}.ts")
+    public ResponseEntity<Resource> serveQualitySegment(
+            @PathVariable String videoId,
+            @PathVariable String quality,
+            @PathVariable String segment
+    ){
+        try {
+            InputStream videoSegment = videoServices.getVideoSegment(videoId, segment, quality);
+            Resource resource = new InputStreamResource(videoSegment);
+            return ResponseEntity
+                    .ok()
+                    .header(HttpHeaders.CONTENT_TYPE, "video/mp2t")
+                    .body(resource);
+        } catch (FileNotFoundException e) {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        } catch (Exception e) {
+            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
     @GetMapping("/{videoId}/{segment}.ts")
     public ResponseEntity<Resource> serveSegments(
             @PathVariable String videoId,

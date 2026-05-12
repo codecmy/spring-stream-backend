@@ -1256,6 +1256,13 @@
             <div class="player-meta">
               <span class="player-rating">HD</span>
               <span>${video.contentType}</span>
+              <select id="quality-selector" onchange="changeQuality(this.value)" style="margin-left:auto;background:var(--bg-elevated);color:var(--text-primary);border:1px solid var(--border);border-radius:4px;padding:4px 8px;font-size:0.85rem;">
+                <option value="">Auto</option>
+                <option value="v3">720p</option>
+                <option value="v2">360p</option>
+                <option value="v1">240p</option>
+                <option value="v0">234p</option>
+              </select>
             </div>
             <p class="player-description">${video.videoDescription}</p>
           </div>
@@ -1449,14 +1456,33 @@
       }
     }
 
-    async function initPlayer(videoId) {
+    let currentVideoId = null;
+
+    function buildHlsUrl(videoId, quality) {
+      if (quality) {
+        return `${API_BASE}/${encodeURIComponent(videoId)}/${quality}/index.m3u8`;
+      }
+      return `${API_BASE}/${encodeURIComponent(videoId)}/master.m3u8`;
+    }
+
+    function changeQuality(quality) {
+      if (!currentVideoId) return;
+      if (hls) {
+        hls.destroy();
+        hls = null;
+      }
+      initPlayer(currentVideoId, quality);
+    }
+
+    async function initPlayer(videoId, quality) {
+      currentVideoId = videoId;
       const video = videos.find(v => v.videoId === videoId);
       if (!video) return;
       
       const player = document.getElementById('video-player');
       if (!player) return;
       
-      const hlsUrl = `${API_BASE}/${encodeURIComponent(videoId)}/master.m3u8`;
+      const hlsUrl = buildHlsUrl(videoId, quality);
       
       if (Hls.isSupported()) {
         hls = new Hls({
