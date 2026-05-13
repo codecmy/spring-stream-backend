@@ -5,9 +5,12 @@ import com.example.spring_stream_backend.config.RabbitConfig;
 import com.example.spring_stream_backend.repositories.VideoRepositories;
 import com.example.spring_stream_backend.services.VideoServices;
 import io.minio.GetObjectArgs;
+import io.minio.ListObjectsArgs;
 import io.minio.MinioClient;
 import io.minio.PutObjectArgs;
+import io.minio.Result;
 import io.minio.errors.*;
+import io.minio.messages.Item;
 import jakarta.annotation.PostConstruct;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Value;
@@ -28,8 +31,10 @@ import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 
 @Service
 public class VideoServiceImpl implements VideoServices {
@@ -44,6 +49,7 @@ public class VideoServiceImpl implements VideoServices {
     @Value("${minio.hls_bucket}")
     private String hlsBucketName;
     private final RabbitTemplate rabbitTemplate;
+    private final Map<String, String> hlsPrefixCache = new ConcurrentHashMap<>();
     public VideoServiceImpl(MinioClient minioClient, RabbitTemplate rabbitTemplate, VideoRepositories videoRepositories) {
         this.rabbitTemplate = rabbitTemplate;
         this.minioClient = minioClient;
@@ -92,41 +98,64 @@ public class VideoServiceImpl implements VideoServices {
             throw new IOException("Failed to upload video to object storage", e);
         }
     }
+    private String findHlsPrefixByVideoId(String videoId) {
+        String cached = hlsPrefixCache.get(videoId);
+        if (cached != null) {
+            return cached;
+        }
+        try {
+            Iterable<Result<Item>> results = minioClient.listObjects(
+                    ListObjectsArgs.builder()
+                            .bucket(hlsBucketName)
+                            .prefix(videoId + "_")
+                            .delimiter("/")
+                            .maxKeys(1)
+                            .build()
+            );
+            for (Result<Item> result : results) {
+                Item item = result.get();
+                if (item.isDir()) {
+                    String name = item.objectName();
+                    String prefix = name.endsWith("/") ? name.substring(0, name.length() - 1) : name;
+                    hlsPrefixCache.put(videoId, prefix);
+                    return prefix;
+                }
+            }
+        } catch (Exception e) {
+            System.err.println("findHlsPrefixByVideoId failed for " + videoId + ": " + e.getMessage());
+        }
+        return null;
+    }
+
     @Override
-    public Resource getm3u8(String videoId) throws FileNotFoundException {
-        Optional<Video> byId = videoRepositories.findById(videoId);
-        if (byId.isEmpty()) {
+    public Resource getm3u8(String videoId) throws IOException {
+        String prefix = findHlsPrefixByVideoId(videoId);
+        if (prefix == null) {
             return null;
         }
-        //7378c6ba-c67c-4783-be67-58f1780798fa_15370713_3840_2160_30fps.mp4/master.m3u8
-        String filepath = byId.get().getFilepath();
-        String objectName = filepath.replaceFirst("raw/","")+"/"+"master.m3u8";
         try {
             return new InputStreamResource(minioClient.getObject(
                     GetObjectArgs.builder()
                             .bucket(hlsBucketName)
-                            .object(objectName)
+                            .object(prefix + "/master.m3u8")
                             .build()));
-
         } catch (ErrorResponseException | InsufficientDataException | InternalException | InvalidKeyException |
                  InvalidResponseException | IOException | NoSuchAlgorithmException | ServerException |
                  XmlParserException e) {
-            throw new FileNotFoundException("No such file or directory");
+            throw new FileNotFoundException("master.m3u8 not found for video: " + videoId);
         }
     }
     @Override
-    public Resource getQualityPlaylist(String videoId, String quality) throws FileNotFoundException {
-        Optional<Video> byId = videoRepositories.findById(videoId);
-        if (byId.isEmpty()) {
+    public Resource getQualityPlaylist(String videoId, String quality) throws IOException {
+        String prefix = findHlsPrefixByVideoId(videoId);
+        if (prefix == null) {
             throw new FileNotFoundException("Video not found for id: " + videoId);
         }
-        String filepath = byId.get().getFilepath();
-        String objectName = filepath.replaceFirst("raw/","") + "/" + quality + "/index.m3u8";
         try {
             return new InputStreamResource(minioClient.getObject(
                     GetObjectArgs.builder()
                             .bucket(hlsBucketName)
-                            .object(objectName)
+                            .object(prefix + "/" + quality + "/index.m3u8")
                             .build()));
         } catch (ErrorResponseException | InsufficientDataException | InternalException | InvalidKeyException |
                  InvalidResponseException | IOException | NoSuchAlgorithmException | ServerException |
@@ -137,16 +166,12 @@ public class VideoServiceImpl implements VideoServices {
 
     @Override
     public InputStream getVideoSegment(String videoId, String segmentNo, String quality) throws IOException, ServerException, InsufficientDataException, ErrorResponseException, NoSuchAlgorithmException, InvalidKeyException, InvalidResponseException, XmlParserException, InternalException {
-        Optional<Video> byId = videoRepositories.findById(videoId);
-        if (byId.isEmpty()) {
+        String prefix = findHlsPrefixByVideoId(videoId);
+        if (prefix == null) {
             throw new FileNotFoundException("Video not found for id: " + videoId);
         }
-        String rawObjectName = byId.get().getFilepath();
-        if (rawObjectName == null || rawObjectName.isBlank()) {
-            throw new FileNotFoundException("No object path stored for video id: " + videoId);
-        }
         String normalizedSegmentName = segmentNo.endsWith(".ts") ? segmentNo : segmentNo + ".ts";
-        String objectName = rawObjectName.replaceFirst("raw/", "") + "/" + quality + "/" + normalizedSegmentName;
+        String objectName = prefix + "/" + quality + "/" + normalizedSegmentName;
         try {
             return minioClient.getObject(
                     GetObjectArgs.builder()
@@ -164,19 +189,13 @@ public class VideoServiceImpl implements VideoServices {
 
     @Override
     public InputStream getVideoSegement(String videoId,String segmentNo) throws IOException, ServerException, InsufficientDataException, ErrorResponseException, NoSuchAlgorithmException, InvalidKeyException, InvalidResponseException, XmlParserException, InternalException {
-        Optional<Video> byId = videoRepositories.findById(videoId);
-        if (byId.isEmpty()) {
+        String prefix = findHlsPrefixByVideoId(videoId);
+        if (prefix == null) {
             throw new FileNotFoundException("Video not found for id: " + videoId);
         }
 
-        String rawObjectName = byId.get().getFilepath();
-        if (rawObjectName == null || rawObjectName.isBlank()) {
-            throw new FileNotFoundException("No object path stored for video id: " + videoId);
-        }
-
         String normalizedSegmentName = segmentNo.endsWith(".ts") ? segmentNo : segmentNo + ".ts";
-        String hlsBaseObjectName = rawObjectName+"/"+normalizedSegmentName;
-        String objectName=hlsBaseObjectName.replaceFirst("raw/","");
+        String objectName = prefix + "/" + normalizedSegmentName;
         try {
                 return minioClient.getObject(
                         GetObjectArgs.builder()
@@ -188,7 +207,6 @@ public class VideoServiceImpl implements VideoServices {
                     throw e;
                 }
             }
-
 
         throw new FileNotFoundException("Segment not found for video id: " + videoId + ", segment: " + normalizedSegmentName);
     }
@@ -229,7 +247,84 @@ public class VideoServiceImpl implements VideoServices {
 
     @Override
     public List<Video> getAllVideo() {
+        List<Video> hlsVideos = listHlsVideos();
+        if (!hlsVideos.isEmpty()) {
+            return hlsVideos;
+        }
+        List<Video> rawVideos = listRawVideos();
+        if (!rawVideos.isEmpty()) {
+            return rawVideos;
+        }
         return videoRepositories.findAll();
+    }
+
+    private List<Video> listHlsVideos() {
+        List<Video> videos = new ArrayList<>();
+        try {
+            Iterable<Result<Item>> results = minioClient.listObjects(
+                    ListObjectsArgs.builder()
+                            .bucket(hlsBucketName)
+                            .delimiter("/")
+                            .build()
+            );
+            for (Result<Item> result : results) {
+                Item item = result.get();
+                if (!item.isDir()) continue;
+                String name = item.objectName();
+                String folder = name.endsWith("/") ? name.substring(0, name.length() - 1) : name;
+                int underscoreIdx = folder.indexOf('_');
+                if (underscoreIdx <= 0) continue;
+                String vid = folder.substring(0, underscoreIdx);
+                String filename = folder.substring(underscoreIdx + 1);
+                int dotIdx = filename.lastIndexOf('.');
+                String title = dotIdx > 0 ? filename.substring(0, dotIdx) : filename;
+                hlsPrefixCache.put(vid, folder);
+                videos.add(Video.builder()
+                        .videoId(vid)
+                        .title(title)
+                        .videoName(filename)
+                        .filepath("raw/" + folder)
+                        .contentType("application/vnd.apple.mpegurl")
+                        .build());
+            }
+        } catch (Exception e) {
+            System.err.println("listHlsVideos failed: " + e.getMessage());
+        }
+        return videos;
+    }
+
+    private List<Video> listRawVideos() {
+        List<Video> videos = new ArrayList<>();
+        try {
+            Iterable<Result<Item>> results = minioClient.listObjects(
+                    ListObjectsArgs.builder()
+                            .bucket(bucketName)
+                            .prefix("raw/")
+                            .build()
+            );
+            for (Result<Item> result : results) {
+                Item item = result.get();
+                if (item.isDir()) continue;
+                String objectName = item.objectName();
+                String stripped = objectName.startsWith("raw/") ? objectName.substring(4) : objectName;
+                int underscoreIdx = stripped.indexOf('_');
+                if (underscoreIdx <= 0) continue;
+                String vid = stripped.substring(0, underscoreIdx);
+                String filename = stripped.substring(underscoreIdx + 1);
+                int dotIdx = filename.lastIndexOf('.');
+                String title = dotIdx > 0 ? filename.substring(0, dotIdx) : filename;
+                videos.add(Video.builder()
+                        .videoId(vid)
+                        .title(title)
+                        .videoName(filename)
+                        .filepath(objectName)
+                        .contentType("video/mp4")
+                        .build());
+            }
+        } catch (Exception e) {
+            System.err.println("listRawVideos failed: " + e.getMessage());
+        }
+        return videos;
     }
 
     @Override

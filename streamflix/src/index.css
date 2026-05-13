@@ -1,0 +1,122 @@
+@import "tailwindcss";
+
+@theme {
+  --color-surface-900: #0a0a0a;
+  --color-surface-800: #111111;
+  --color-surface-700: #1a1a1a;
+  --color-surface-600: #222222;
+  --color-surface-500: #2a2a2a;
+  --color-surface-400: #333333;
+  --color-surface-300: #404040;
+  --color-surface-200: #666666;
+  --color-surface-100: #888888;
+
+  --color-accent: 220 3 10;
+
+  --color-crimson-50: #fff0f0;
+  --color-crimson-100: #ffdddd;
+  --color-crimson-200: #ffc0c0;
+  --color-crimson-300: #ff9494;
+  --color-crimson-400: #ff5757;
+  --color-crimson-500: #ff2323;
+  --color-crimson-600: #dc030a;
+  --color-crimson-700: #b2070a;
+  --color-crimson-800: #900b0e;
+  --color-crimson-900: #680a0c;
+
+  --color-gold: #f5c518;
+  --color-success: #46d369;
+  --color-warning: #f5c518;
+  --color-error: #dc030a;
+
+  --font-display: "Syne", sans-serif;
+  --font-body: "Sora", sans-serif;
+
+  --ease-out-expo: cubic-bezier(0.19, 1, 0.22, 1);
+  --ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-out-back: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --ease-in-out-sharp: cubic-bezier(0.4, 0, 0.6, 1);
+
+  --animate-fade-in: fade-in 0.3s var(--ease-in-out);
+  --animate-slide-up: slide-up 0.4s var(--ease-out-expo);
+  --animate-scale-in: scale-in 0.2s var(--ease-out-back);
+
+  @keyframes fade-in {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+  @keyframes slide-up {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes scale-in {
+    from { opacity: 0; transform: scale(0.95); }
+    to { opacity: 1; transform: scale(1); }
+  }
+  @keyframes shimmer {
+    0% { background-position: -200% 0; }
+    100% { background-position: 200% 0; }
+  }
+}
+
+@layer base {
+  *, *::before, *::after {
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  html {
+    @apply bg-surface-900 text-white;
+    scroll-behavior: smooth;
+    font-family: var(--font-body);
+  }
+
+  body {
+    @apply m-0 overflow-x-hidden;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  ::selection {
+    background-color: rgb(220 3 10 / 0.3);
+    color: #fff;
+  }
+
+  ::-webkit-scrollbar {
+    @apply w-2 h-2;
+  }
+  ::-webkit-scrollbar-track {
+    @apply bg-surface-800;
+  }
+  ::-webkit-scrollbar-thumb {
+    @apply bg-surface-400 rounded-full hover:bg-surface-300;
+  }
+}
+
+@layer utilities {
+  .skeleton-shimmer {
+    background: linear-gradient(
+      90deg,
+      theme(colors.surface.700) 25%,
+      theme(colors.surface.500) 50%,
+      theme(colors.surface.700) 75%
+    );
+    background-size: 200% 100%;
+    animation: shimmer 1.5s ease-in-out infinite;
+  }
+
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  .text-balance {
+    text-wrap: balance;
+  }
+
+  .text-pretty {
+    text-wrap: pretty;
+  }
+}

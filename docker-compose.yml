@@ -7,12 +7,22 @@ services:
       - "5672:5672"
       - "15672:15672"
     environment:
+      RABBITMQ_ERLANG_COOKIE: "streamflix-cookie"
       RABBITMQ_SERVER_ADDITIONAL_ERL_ARGS: "-rabbit consumer_timeout 7200000"
+    entrypoint: []
+    command: >
+      sh -c "
+        echo \"$$RABBITMQ_ERLANG_COOKIE\" > /var/lib/rabbitmq/.erlang.cookie &&
+        chown rabbitmq:rabbitmq /var/lib/rabbitmq/.erlang.cookie &&
+        chmod 400 /var/lib/rabbitmq/.erlang.cookie &&
+        exec gosu rabbitmq rabbitmq-server
+      "
     healthcheck:
       test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
       interval: 10s
-      timeout: 5s
-      retries: 5
+      timeout: 10s
+      retries: 15
+      start_period: 90s
     networks:
       - stream-net
 
@@ -113,7 +123,7 @@ services:
       - "80:80"
     volumes:
       - ./nginx.conf:/etc/nginx/nginx.conf:ro
-      - ./static:/var/www/static:ro
+      - ./streamflix/dist:/var/www/streamflix-dist:ro
       - nginx-cache:/var/cache/nginx
     depends_on:
       backend:
