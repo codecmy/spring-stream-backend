@@ -1,6 +1,38 @@
 import { create } from 'zustand'
 
 const useStore = create((set) => ({
+  user: null,
+  isAuthenticated: false,
+  isAdmin: false,
+  authLoading: true,
+
+  checkSession: async () => {
+    set({ authLoading: true });
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        set({ user: null, isAuthenticated: false, isAdmin: false, authLoading: false });
+        return;
+      }
+      const res = await fetch('/api/v1/auth/me', {
+        headers: { 'Authorization': 'Bearer ' + token }
+      });
+      if (res.ok) {
+        const user = await res.json();
+        set({ user, isAuthenticated: true, isAdmin: user.role === 'ADMIN', authLoading: false });
+      } else {
+        localStorage.removeItem('token');
+        set({ user: null, isAuthenticated: false, isAdmin: false, authLoading: false });
+      }
+    } catch {
+      set({ user: null, isAuthenticated: false, isAdmin: false, authLoading: false });
+    }
+  },
+
+  logout: () => {
+    localStorage.removeItem('token');
+    set({ user: null, isAuthenticated: false, isAdmin: false });
+  },
   searchOpen: false,
   searchQuery: '',
   setSearchOpen: (open) => set({ searchOpen: open }),

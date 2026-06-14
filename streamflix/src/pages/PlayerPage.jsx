@@ -62,6 +62,10 @@ export default function PlayerPage() {
     const hls = new Hls({
       enableWorker: true,
       lowLatencyMode: false,
+      xhrSetup: (xhr) => {
+        const token = localStorage.getItem('token')
+        if (token) xhr.setRequestHeader('Authorization', 'Bearer ' + token)
+      },
     })
     hlsRef.current = hls
 

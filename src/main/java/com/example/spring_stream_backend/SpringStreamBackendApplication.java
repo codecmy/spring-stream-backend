@@ -2,8 +2,10 @@ package com.example.spring_stream_backend;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.scheduling.annotation.EnableScheduling;
 
 @SpringBootApplication
+@EnableScheduling
 public class SpringStreamBackendApplication {
 
 	public static void main(String[] args) {

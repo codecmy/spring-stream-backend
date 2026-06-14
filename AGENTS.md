@@ -8,7 +8,10 @@ docker compose up -d                # full stack (needs .env)
 ```
 
 ## Architecture notes
-- **No Spring Security** — auth is a servlet `FilterRegistrationBean` wrapping `HankoSessionFilter`, registered on `/secured/*` and `/api/v1/videos`. However `shouldNotFilter()` exempts `/api/v1/videos/*`, so video endpoints are effectively **public**. Only uploads pass through Hanko validation.
+- **JWT auth (self-contained)** — `JwtAuthenticationFilter` extracts `Authorization: Bearer <token>` header, delegates to `JwtAuthenticationProvider` which validates the JWT locally via `JwtUtil` (jjwt, HMAC-SHA256). No external auth provider.
+- **Login flow** — `POST /api/v1/auth/login` accepts `{ email, password }`, validates against DB (BCrypt), returns JWT. `POST /api/v1/auth/register` creates a new user. `GET /api/v1/auth/me` returns `{ id, email, role }`.
+- **Admin seeding** — `AdminSeeder` reads `ADMIN_EMAILS` + `ADMIN_PASSWORD` env vars at startup, creates or updates admin users.
+- **Frontend stores JWT in `localStorage`**, sends as `Authorization: Bearer` header. Logout clears localStorage.
 - **Video worker is external** — `RabbitConfig` sets up `video.exchange` / `video.processing.queue` (`video.uploaded` routing key). Backend only **sends** messages after upload. The `/worker` service in `docker-compose.yml` consumes them (separate `transcoder-worker:latest` image).
 - **Two MinIO buckets**: `videos` (raw uploads) and `video-hls` (transcoded HLS assets). Raw objects stored under `raw/{uuid}_{filename}`. HLS objects stored as `{uuid}_{filename}/master.m3u8` and `{uuid}_{filename}/{quality}/index.m3u8` / `{uuid}_{filename}/{quality}/{segment}.ts`.
 - **No course API** — `Video` has `@ManyToOne` to `Courses` entity, but there are no course endpoints.
@@ -50,8 +53,11 @@ src/main/java/com/example/spring_stream_backend/
   TestController.java                    # GET /health → "test"
   controllers/VideoController.java       # all video REST endpoints
   config/                                  # MinioConfig, RabbitConfig, CorsConfig, SecurityConfig, RestClientConfig
-  filter/HankoSessionFilter.java          # Hanko auth servlet filter
-  auth/HankoSessionValidator.java         # validates sessions via Hanko API
+  filter/JwtAuthenticationFilter.java     # reads Bearer token, delegates to provider
+  auth/JwtAuthenticationProvider.java     # validates JWT via JwtUtil, creates User
+  auth/JwtUtil.java                       # JWT generation & validation (jjwt, HMAC-SHA256)
+  auth/JwtAuthenticationToken.java        # custom AbstractAuthenticationToken
+  auth/AdminSeeder.java                   # seeds admin users from ADMIN_EMAILS + ADMIN_PASSWORD
   services/VideoServices.java             # interface
   services/impl/VideoServiceImpl.java     # upload, HLS streaming, local FFmpeg processing
   services/impl/MinioService.java         # generic MinIO upload helper

@@ -4,12 +4,10 @@ import com.example.spring_stream_backend.Entity.Video;
 import com.example.spring_stream_backend.config.RabbitConfig;
 import com.example.spring_stream_backend.repositories.VideoRepositories;
 import com.example.spring_stream_backend.services.VideoServices;
-import io.minio.GetObjectArgs;
-import io.minio.ListObjectsArgs;
-import io.minio.MinioClient;
-import io.minio.PutObjectArgs;
-import io.minio.Result;
+import io.minio.*;
 import io.minio.errors.*;
+import io.minio.messages.DeleteError;
+import io.minio.messages.DeleteObject;
 import io.minio.messages.Item;
 import jakarta.annotation.PostConstruct;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
@@ -30,6 +28,7 @@ import java.nio.file.Paths;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -73,29 +72,62 @@ public class VideoServiceImpl implements VideoServices {
 
     @Override
     public Video save(Video video, MultipartFile file) throws IOException {
-        try (InputStream inputStream = file.getInputStream()) {
+        Path tempFile = Files.createTempFile("upload-", ".tmp");
+        Path thumbFile = Files.createTempFile("thumb-", ".jpg");
+        try {
+            file.transferTo(tempFile.toFile());
             String fileName = file.getOriginalFilename();
             String contentType = file.getContentType();
             assert fileName != null;
             String cleanFileName = StringUtils.cleanPath(fileName);
             String objectName = "raw/" + UUID.randomUUID() + "_" + cleanFileName;
-            minioClient.putObject(
-                    PutObjectArgs.builder()
-                            .bucket(bucketName)
-                            .object(objectName)
-                            .stream(inputStream, file.getSize(), -1)
-                            .contentType(contentType)
-                            .build()
+
+            ProcessBuilder pb = new ProcessBuilder(
+                    "ffmpeg", "-y", "-i", tempFile.toString(),
+                    "-vframes", "1", "-q:v", "3", thumbFile.toString()
             );
+            pb.inheritIO();
+            try {
+                Process process = pb.start();
+                int exit = process.waitFor();
+                if (exit == 0 && Files.size(thumbFile) > 0) {
+                    try (InputStream thumbStream = Files.newInputStream(thumbFile)) {
+                        minioClient.putObject(
+                                PutObjectArgs.builder()
+                                        .bucket(bucketName)
+                                        .object("thumbnails/" + video.getVideoId() + ".jpg")
+                                        .stream(thumbStream, Files.size(thumbFile), -1)
+                                        .contentType("image/jpeg")
+                                        .build()
+                        );
+                    }
+                }
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+
+            try (InputStream videoStream = Files.newInputStream(tempFile)) {
+                minioClient.putObject(
+                        PutObjectArgs.builder()
+                                .bucket(bucketName)
+                                .object(objectName)
+                                .stream(videoStream, Files.size(tempFile), -1)
+                                .contentType(contentType)
+                                .build()
+                );
+            }
             video.setContentType(contentType);
             video.setFilepath(objectName);
             Video save = videoRepositories.save(video);
-            rabbitTemplate.convertAndSend(RabbitConfig.EXCHANGE,RabbitConfig.ROUTING_KEY,objectName);
+            rabbitTemplate.convertAndSend(RabbitConfig.EXCHANGE, RabbitConfig.ROUTING_KEY, objectName);
             return save;
         } catch (IOException | ErrorResponseException | InsufficientDataException | InternalException |
                  InvalidKeyException | InvalidResponseException | NoSuchAlgorithmException | ServerException |
                  XmlParserException e) {
             throw new IOException("Failed to upload video to object storage", e);
+        } finally {
+            try { Files.deleteIfExists(tempFile); } catch (IOException ignored) {}
+            try { Files.deleteIfExists(thumbFile); } catch (IOException ignored) {}
         }
     }
     private String findHlsPrefixByVideoId(String videoId) {
@@ -246,16 +278,47 @@ public class VideoServiceImpl implements VideoServices {
     }
 
     @Override
+    public Resource getThumbnail(String videoId) throws IOException {
+        try {
+            InputStream stream = minioClient.getObject(
+                    GetObjectArgs.builder()
+                            .bucket(bucketName)
+                            .object("thumbnails/" + videoId + ".jpg")
+                            .build()
+            );
+            return new InputStreamResource(stream);
+        } catch (ErrorResponseException e) {
+            if ("NoSuchKey".equalsIgnoreCase(e.errorResponse().code())) {
+                throw new FileNotFoundException("Thumbnail not found for video: " + videoId);
+            }
+            throw new IOException("Failed to get thumbnail", e);
+        } catch (Exception e) {
+            throw new IOException("Failed to get thumbnail", e);
+        }
+    }
+
+    @Override
     public List<Video> getAllVideo() {
         List<Video> hlsVideos = listHlsVideos();
         if (!hlsVideos.isEmpty()) {
+            mergeDbTitles(hlsVideos);
             return hlsVideos;
         }
         List<Video> rawVideos = listRawVideos();
         if (!rawVideos.isEmpty()) {
+            mergeDbTitles(rawVideos);
             return rawVideos;
         }
         return videoRepositories.findAll();
+    }
+
+    private void mergeDbTitles(List<Video> videos) {
+        for (Video v : videos) {
+            Video dbVideo = videoRepositories.findById(v.getVideoId()).orElse(null);
+            if (dbVideo != null && dbVideo.getTitle() != null && !dbVideo.getTitle().isBlank()) {
+                v.setTitle(dbVideo.getTitle());
+            }
+        }
     }
 
     private List<Video> listHlsVideos() {
@@ -325,6 +388,60 @@ public class VideoServiceImpl implements VideoServices {
             System.err.println("listRawVideos failed: " + e.getMessage());
         }
         return videos;
+    }
+
+    @Override
+    public void deleteVideo(String videoId) throws Exception {
+        Video video = videoRepositories.findById(videoId).orElse(null);
+        if (video == null) {
+            throw new FileNotFoundException("Video not found: " + videoId);
+        }
+
+        if (video.getFilepath() != null && !video.getFilepath().isBlank()) {
+            try {
+                minioClient.removeObject(
+                        RemoveObjectArgs.builder()
+                                .bucket(bucketName)
+                                .object(video.getFilepath())
+                                .build()
+                );
+            } catch (Exception e) {
+                System.err.println("Failed to delete raw video from MinIO: " + e.getMessage());
+            }
+        }
+
+        String hlsPrefix = findHlsPrefixByVideoId(videoId);
+        if (hlsPrefix != null) {
+            try {
+                Iterable<Result<Item>> objects = minioClient.listObjects(
+                        ListObjectsArgs.builder()
+                                .bucket(hlsBucketName)
+                                .prefix(hlsPrefix + "/")
+                                .recursive(true)
+                                .build()
+                );
+                List<DeleteObject> deleteObjects = new LinkedList<>();
+                for (Result<Item> result : objects) {
+                    deleteObjects.add(new DeleteObject(result.get().objectName()));
+                }
+                if (!deleteObjects.isEmpty()) {
+                    Iterable<Result<DeleteError>> errors = minioClient.removeObjects(
+                            RemoveObjectsArgs.builder()
+                                    .bucket(hlsBucketName)
+                                    .objects(deleteObjects)
+                                    .build()
+                    );
+                    for (Result<DeleteError> error : errors) {
+                        System.err.println("Failed to delete HLS object: " + error.get().objectName());
+                    }
+                }
+            } catch (Exception e) {
+                System.err.println("Failed to delete HLS assets from MinIO: " + e.getMessage());
+            }
+            hlsPrefixCache.remove(videoId);
+        }
+
+        videoRepositories.delete(video);
     }
 
     @Override

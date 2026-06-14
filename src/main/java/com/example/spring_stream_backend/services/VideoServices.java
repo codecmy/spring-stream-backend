@@ -13,18 +13,15 @@ import java.security.NoSuchAlgorithmException;
 import java.util.List;
 
 public interface VideoServices{
-    //Save video
     Video save(Video video, MultipartFile file) throws IOException;
-    //Get vdo by Id
     Video findById(String id);
-    //Get by title
     Video findByTitle(String title);
-    //Get all
     List<Video> getAllVideo();
-    //video processing
     String processVideo(String videoId) throws IOException;
-    InputStream getVideoSegement(String videoId,String segmentNo) throws IOException, ServerException, InsufficientDataException, ErrorResponseException, NoSuchAlgorithmException, InvalidKeyException, InvalidResponseException, XmlParserException, InternalException;
+    InputStream getVideoSegement(String videoId, String segmentNo) throws IOException, ServerException, InsufficientDataException, ErrorResponseException, NoSuchAlgorithmException, InvalidKeyException, InvalidResponseException, XmlParserException, InternalException;
     Resource getm3u8(String videoId) throws IOException;
     Resource getQualityPlaylist(String videoId, String quality) throws IOException;
     InputStream getVideoSegment(String videoId, String segmentNo, String quality) throws IOException, ServerException, InsufficientDataException, ErrorResponseException, NoSuchAlgorithmException, InvalidKeyException, InvalidResponseException, XmlParserException, InternalException;
+    void deleteVideo(String videoId) throws Exception;
+    Resource getThumbnail(String videoId) throws IOException;
 }

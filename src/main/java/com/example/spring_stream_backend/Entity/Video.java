@@ -1,11 +1,8 @@
 package com.example.spring_stream_backend.Entity;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 import lombok.*;
+import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "yt_video")
@@ -22,7 +19,22 @@ public class Video {
     private String videoDescription;
     private String filepath;
     private String contentType;
+
     @ManyToOne
     @JoinColumn(name = "course_id")
     private Courses courses;
+
+    @ManyToOne
+    @JoinColumn(name = "uploaded_by")
+    private User uploadedBy;
+
+    @Column(name = "uploaded_at")
+    private LocalDateTime uploadedAt;
+
+    @PrePersist
+    protected void onCreate() {
+        if (uploadedAt == null) {
+            uploadedAt = LocalDateTime.now();
+        }
+    }
 }

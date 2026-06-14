@@ -42,7 +42,7 @@ services:
       - stream-net
 
   minio-init:
-    image: curlimages/curl:latest
+    image: minio/mc:latest
     depends_on:
       minio:
         condition: service_started
@@ -50,19 +50,20 @@ services:
       - .env
     environment:
       MINIO_HOST: http://minio:9000
-      MINIO_ACCESS_KEY: admin
-      MINIO_SECRET_KEY: password
+      MINIO_ROOT_USER: admin
+      MINIO_ROOT_PASSWORD: password
     entrypoint: ["/bin/sh", "-c"]
     command:
       - |
         echo "Waiting for MinIO to be ready...";
         sleep 10;
+        mc alias set myminio "$${MINIO_HOST}" "$${MINIO_ROOT_USER}" "$${MINIO_ROOT_PASSWORD}";
         
         echo "Creating videos bucket...";
-        curl -X PUT "${MINIO_HOST}/videos/" -u "${MINIO_ACCESS_KEY}:${MINIO_SECRET_KEY}" || true;
+        mc mb myminio/videos --ignore-existing;
         
         echo "Creating video-hls bucket...";
-        curl -X PUT "${MINIO_HOST}/video-hls/" -u "${MINIO_ACCESS_KEY}:${MINIO_SECRET_KEY}" || true;
+        mc mb myminio/video-hls --ignore-existing;
         
         echo "Buckets setup complete";
         exit 0;
@@ -107,8 +108,10 @@ services:
       MINIO_SECRET_KEY: password
       MINIO_BUCKET: videos
       MINIO_HLS_BUCKET: video-hls
-      HANKO_BASE_URL: https://d655128a-1ef2-4249-9ce7-64da57162e65.hanko.io
-      HANKO_COOKIE_NAME: hanko
+      ADMIN_EMAILS: ${ADMIN_EMAILS:-}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-admin123}
+      JWT_SECRET: ${JWT_SECRET:-streamflix-default-secret-key-change-in-production}
+      JWT_EXPIRATION: ${JWT_EXPIRATION:-86400000}
     depends_on:
       - mysql
       - rabbitmq

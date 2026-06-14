@@ -8,9 +8,15 @@ const NAV_ITEMS = ['Home', 'Series', 'Movies', 'New & Popular', 'My List', 'Brow
 function NavbarComponent() {
   const scrolledPast = useStore((s) => s.scrolledPast)
   const setSearchOpen = useStore((s) => s.setSearchOpen)
+  const user = useStore((s) => s.user)
+  const isAuthenticated = useStore((s) => s.isAuthenticated)
+  const isAdmin = useStore((s) => s.isAdmin)
+  const logout = useStore((s) => s.logout)
   const [mobileOpen, setMobileOpen] = useState(false)
   const [activeItem, setActiveItem] = useState('Home')
+  const [profileOpen, setProfileOpen] = useState(false)
   const menuRef = useRef(null)
+  const profileRef = useRef(null)
 
   useEffect(() => {
     if (!mobileOpen) return
@@ -24,6 +30,16 @@ function NavbarComponent() {
   }, [mobileOpen])
 
   useEffect(() => {
+    const handler = (e) => {
+      if (profileRef.current && !profileRef.current.contains(e.target)) {
+        setProfileOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [])
+
+  useEffect(() => {
     document.body.style.overflow = mobileOpen ? 'hidden' : ''
     return () => { document.body.style.overflow = '' }
   }, [mobileOpen])
@@ -31,6 +47,16 @@ function NavbarComponent() {
   const handleSearchClick = useCallback(() => {
     setSearchOpen(true)
   }, [setSearchOpen])
+
+  const handleLogin = useCallback(() => {
+    window.location.href = '/login'
+  }, [])
+
+  const handleLogout = useCallback(() => {
+    logout()
+  }, [logout])
+
+  const profileInitial = user?.email?.charAt(0)?.toUpperCase() || 'U'
 
   return (
     <>
@@ -79,6 +105,15 @@ function NavbarComponent() {
           </div>
 
           <div className="flex items-center gap-3 md:gap-5">
+            {isAdmin && (
+              <a
+                href="/admin.html"
+                className="hidden md:flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold uppercase tracking-wider text-accent border border-accent/30 rounded-md hover:bg-accent/10 transition-colors duration-150"
+              >
+                Admin
+              </a>
+            )}
+
             <button
               onClick={handleSearchClick}
               className="p-2 text-surface-100 hover:text-white transition-colors duration-150"
@@ -104,13 +139,55 @@ function NavbarComponent() {
               </svg>
             </button>
 
-            <div className="hidden md:flex items-center">
-              <button
-                className="w-8 h-8 rounded-full bg-accent flex items-center justify-center text-sm font-bold text-white"
-                aria-label="Profile"
-              >
-                U
-              </button>
+            <div className="hidden md:flex items-center relative" ref={profileRef}>
+              {isAuthenticated ? (
+                <>
+                  <button
+                    onClick={() => setProfileOpen(!profileOpen)}
+                    className="w-8 h-8 rounded-full bg-accent flex items-center justify-center text-sm font-bold text-white hover:ring-2 hover:ring-white/30 transition-all"
+                    aria-label="Profile"
+                  >
+                    {profileInitial}
+                  </button>
+                  <AnimatePresence>
+                    {profileOpen && (
+                      <motion.div
+                        initial={{ opacity: 0, y: -8 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -8 }}
+                        transition={{ duration: 0.15 }}
+                        className="absolute top-full right-0 mt-2 w-48 bg-surface-800 border border-surface-600/50 rounded-xl shadow-2xl overflow-hidden"
+                      >
+                        <div className="px-4 py-3 border-b border-surface-700">
+                          <p className="text-xs text-surface-200">{user?.email}</p>
+                          {isAdmin && <p className="text-[10px] text-accent font-semibold uppercase mt-0.5">Admin</p>}
+                        </div>
+                        {isAdmin && (
+                          <a
+                            href="/admin.html"
+                            className="block px-4 py-2.5 text-sm text-surface-100 hover:text-white hover:bg-surface-700 transition-colors"
+                          >
+                            Admin Panel
+                          </a>
+                        )}
+                        <button
+                          onClick={handleLogout}
+                          className="w-full text-left px-4 py-2.5 text-sm text-surface-100 hover:text-white hover:bg-surface-700 transition-colors"
+                        >
+                          Sign Out
+                        </button>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </>
+              ) : (
+                <button
+                  onClick={handleLogin}
+                  className="px-4 py-1.5 text-sm font-semibold bg-accent text-white rounded-md hover:bg-accent-hover transition-colors duration-150"
+                >
+                  Sign In
+                </button>
+              )}
             </div>
           </div>
         </div>
@@ -142,13 +219,44 @@ function NavbarComponent() {
                   {item}
                 </button>
               ))}
+              {isAdmin && (
+                <a
+                  href="/admin.html"
+                  className="block py-3 text-lg font-medium text-accent border-b border-surface-400/20"
+                >
+                  Admin Panel
+                </a>
+              )}
               <div className="mt-auto pb-8">
-                <button className="flex items-center gap-3 text-surface-100 hover:text-white transition-colors duration-150">
-                  <div className="w-8 h-8 rounded-full bg-accent flex items-center justify-center text-sm font-bold text-white">
-                    U
+                {isAuthenticated ? (
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-3 text-surface-100">
+                      <div className="w-8 h-8 rounded-full bg-accent flex items-center justify-center text-sm font-bold text-white">
+                        {profileInitial}
+                      </div>
+                      <div>
+                        <span className="text-sm block">{user?.email}</span>
+                        {isAdmin && <span className="text-[10px] text-accent font-semibold uppercase">Admin</span>}
+                      </div>
+                    </div>
+                    <button
+                      onClick={handleLogout}
+                      className="w-full text-left py-2 text-sm text-surface-100 hover:text-white"
+                    >
+                      Sign Out
+                    </button>
                   </div>
-                  <span className="text-sm">Account</span>
-                </button>
+                ) : (
+                  <button
+                    onClick={handleLogin}
+                    className="flex items-center gap-3 text-surface-100 hover:text-white transition-colors duration-150"
+                  >
+                    <div className="w-8 h-8 rounded-full bg-accent flex items-center justify-center text-sm font-bold text-white">
+                      U
+                    </div>
+                    <span className="text-sm">Sign In</span>
+                  </button>
+                )}
               </div>
             </div>
           </motion.div>

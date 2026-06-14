@@ -54,6 +54,7 @@ public class VideoController {
         video.setVideoId(UUID.randomUUID().toString());
         video.setVideoDescription(desc);
         video.setTitle(title);
+        video.setUploadedAt(java.time.LocalDateTime.now());
         try {
             videoServices.save(video, file);
             return ResponseEntity.status(HttpStatus.CREATED).build();
@@ -72,6 +73,20 @@ public class VideoController {
     }
 
 
+
+    @GetMapping("/{videoId}/thumbnail")
+    public ResponseEntity<Resource> getThumbnail(@PathVariable String videoId) {
+        try {
+            Resource resource = videoServices.getThumbnail(videoId);
+            return ResponseEntity.ok()
+                    .header(HttpHeaders.CONTENT_TYPE, MediaType.IMAGE_JPEG_VALUE)
+                    .body(resource);
+        } catch (FileNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+        } catch (IOException e) {
+            return ResponseEntity.internalServerError().build();
+        }
+    }
 
     //stream HLS file
     @GetMapping("/{videoId}/master.m3u8")

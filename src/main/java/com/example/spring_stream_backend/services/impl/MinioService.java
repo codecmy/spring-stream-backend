@@ -2,6 +2,7 @@ package com.example.spring_stream_backend.services.impl;
 
 import io.minio.MinioClient;
 import io.minio.PutObjectArgs;
+import io.minio.RemoveObjectArgs;
 import io.minio.errors.*;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -31,6 +32,15 @@ public class MinioService{
                         .object(objectName)
                         .stream(inputStream, size, -1)
                         .contentType(contentType)
+                        .build()
+        );
+    }
+
+    public void deleteObject(String bucket, String objectName) throws Exception {
+        minioClient.removeObject(
+                RemoveObjectArgs.builder()
+                        .bucket(bucket)
+                        .object(objectName)
                         .build()
         );
     }

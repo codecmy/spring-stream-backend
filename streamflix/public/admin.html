@@ -1,0 +1,568 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>StreamFlix Admin</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@500;700;800&family=Sora:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0a0a0a;
+  --surface-900: #121212;
+  --surface-800: #1a1a1a;
+  --surface-700: #242424;
+  --surface-600: #2e2e2e;
+  --surface-400: #3e3e3e;
+  --surface-200: #6e6e6e;
+  --surface-100: #9e9e9e;
+  --accent: #e50914;
+  --accent-hover: #f6121d;
+  --accent-glow: rgba(229, 9, 20, 0.3);
+  --text: #ffffff;
+  --text-dim: #a0a0a0;
+  --success: #22c55e;
+  --warning: #f59e0b;
+  --error: #ef4444;
+  --sidebar-w: 240px;
+  --header-h: 0px;
+  --font-display: 'Syne', sans-serif;
+  --font-body: 'Sora', sans-serif;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { font-size: 14px; }
+body {
+  font-family: var(--font-body);
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  display: flex;
+  overflow-x: hidden;
+}
+a { color: inherit; text-decoration: none; }
+button { cursor: pointer; font-family: inherit; border: none; background: none; color: inherit; }
+.sidebar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: var(--sidebar-w);
+  height: 100vh;
+  background: var(--surface-900);
+  border-right: 1px solid var(--surface-700);
+  display: flex;
+  flex-direction: column;
+  z-index: 100;
+  overflow-y: auto;
+}
+.sidebar-brand {
+  padding: 24px 20px 20px;
+  border-bottom: 1px solid var(--surface-700);
+}
+.sidebar-brand h1 {
+  font-family: var(--font-display);
+  font-size: 1.4rem;
+  font-weight: 800;
+  color: var(--accent);
+  letter-spacing: -0.02em;
+}
+.sidebar-brand span {
+  font-size: 0.72rem;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  display: block;
+  margin-top: 2px;
+}
+.sidebar-nav { flex: 1; padding: 12px 10px; }
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--text-dim);
+  transition: all 0.15s ease;
+  margin-bottom: 2px;
+  width: 100%;
+  text-align: left;
+}
+.nav-item:hover { background: var(--surface-700); color: var(--text); }
+.nav-item.active { background: var(--surface-700); color: var(--accent); }
+.nav-item svg { width: 18px; height: 18px; flex-shrink: 0; }
+.sidebar-footer {
+  padding: 16px 20px;
+  border-top: 1px solid var(--surface-700);
+  font-size: 0.75rem;
+  color: var(--surface-200);
+}
+.main {
+  margin-left: var(--sidebar-w);
+  flex: 1;
+  padding: 32px 40px;
+  min-height: 100vh;
+}
+.page { display: none; }
+.page.active { display: block; }
+.page-header { margin-bottom: 28px; }
+.page-header h2 {
+  font-family: var(--font-display);
+  font-size: 1.6rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+.page-header p { color: var(--text-dim); margin-top: 4px; font-size: 0.9rem; }
+.stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 32px; }
+.stat-card {
+  background: var(--surface-800);
+  border: 1px solid var(--surface-700);
+  border-radius: 12px;
+  padding: 20px 24px;
+}
+.stat-card .label { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-dim); }
+.stat-card .value { font-size: 2rem; font-weight: 700; margin-top: 6px; font-family: var(--font-display); }
+.table-container {
+  background: var(--surface-800);
+  border: 1px solid var(--surface-700);
+  border-radius: 12px;
+  overflow: hidden;
+}
+table { width: 100%; border-collapse: collapse; }
+thead { background: var(--surface-700); }
+th { text-align: left; padding: 12px 16px; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-dim); font-weight: 600; }
+td { padding: 12px 16px; font-size: 0.85rem; border-top: 1px solid var(--surface-700); }
+tr:hover td { background: rgba(255,255,255,0.02); }
+.role-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 10px;
+  border-radius: 100px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+.role-badge.admin { background: rgba(229,9,20,0.15); color: var(--accent); }
+.role-badge.user { background: rgba(34,197,94,0.12); color: var(--success); }
+.btn-sm {
+  padding: 5px 12px;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  transition: all 0.15s;
+}
+.btn-danger { background: rgba(239,68,68,0.15); color: var(--error); }
+.btn-danger:hover { background: rgba(239,68,68,0.25); }
+.btn-warning { background: rgba(245,158,11,0.15); color: var(--warning); }
+.btn-warning:hover { background: rgba(245,158,11,0.25); }
+.btn-success { background: rgba(34,197,94,0.15); color: var(--success); }
+.btn-success:hover { background: rgba(34,197,94,0.25); }
+.action-cell { display: flex; gap: 6px; }
+.upload-zone {
+  border: 2px dashed var(--surface-400);
+  border-radius: 12px;
+  padding: 60px 20px;
+  text-align: center;
+  transition: all 0.2s;
+  cursor: pointer;
+  background: var(--surface-800);
+  margin-bottom: 20px;
+}
+.upload-zone:hover, .upload-zone.dragover { border-color: var(--accent); background: rgba(229,9,20,0.05); }
+.upload-zone svg { width: 40px; height: 40px; color: var(--surface-200); margin-bottom: 12px; }
+.upload-zone p { color: var(--text-dim); font-size: 0.9rem; }
+.upload-zone .filename { color: var(--accent); font-weight: 600; margin-top: 8px; }
+.form-group { margin-bottom: 16px; }
+.form-group label { display: block; font-size: 0.8rem; font-weight: 600; margin-bottom: 6px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.05em; }
+.form-group input, .form-group textarea {
+  width: 100%;
+  padding: 10px 14px;
+  background: var(--surface-800);
+  border: 1px solid var(--surface-700);
+  border-radius: 8px;
+  color: var(--text);
+  font-family: var(--font-body);
+  font-size: 0.9rem;
+  transition: border-color 0.15s;
+}
+.form-group input:focus, .form-group textarea:focus { outline: none; border-color: var(--accent); }
+.form-group textarea { min-height: 80px; resize: vertical; }
+.btn-primary {
+  padding: 10px 24px;
+  background: var(--accent);
+  color: white;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  transition: all 0.15s;
+}
+.btn-primary:hover { background: var(--accent-hover); }
+.btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+.progress-bar {
+  height: 4px;
+  background: var(--surface-700);
+  border-radius: 2px;
+  margin-top: 12px;
+  overflow: hidden;
+}
+.progress-bar .fill {
+  height: 100%;
+  background: var(--accent);
+  width: 0%;
+  transition: width 0.3s;
+}
+.modal-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.6);
+  backdrop-filter: blur(4px);
+  z-index: 200;
+  align-items: center;
+  justify-content: center;
+}
+.modal-overlay.open { display: flex; }
+.modal {
+  background: var(--surface-800);
+  border: 1px solid var(--surface-700);
+  border-radius: 16px;
+  padding: 28px;
+  max-width: 440px;
+  width: 90%;
+}
+.modal h3 { font-family: var(--font-display); font-size: 1.2rem; margin-bottom: 8px; }
+.modal p { color: var(--text-dim); font-size: 0.9rem; margin-bottom: 20px; line-height: 1.5; }
+.modal-actions { display: flex; gap: 10px; justify-content: flex-end; }
+.btn-ghost { padding: 8px 20px; border-radius: 8px; font-size: 0.8rem; font-weight: 600; color: var(--text-dim); transition: all 0.15s; }
+.btn-ghost:hover { background: var(--surface-700); color: var(--text); }
+.toast-container { position: fixed; top: 20px; right: 20px; z-index: 300; display: flex; flex-direction: column; gap: 8px; }
+.toast {
+  background: var(--surface-800);
+  border: 1px solid var(--surface-700);
+  border-radius: 10px;
+  padding: 12px 20px;
+  font-size: 0.85rem;
+  animation: slideIn 0.2s ease;
+  max-width: 360px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+}
+.toast.success { border-left: 3px solid var(--success); }
+.toast.error { border-left: 3px solid var(--error); }
+@keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+.loading { display: flex; align-items: center; justify-content: center; padding: 60px 0; }
+.spinner { width: 28px; height: 28px; border: 2px solid var(--surface-700); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.7s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.empty-state { text-align: center; padding: 60px 20px; color: var(--text-dim); }
+.auth-gate {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: var(--bg);
+  z-index: 500;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 16px;
+}
+.auth-gate.show { display: flex; }
+.auth-gate h2 { font-family: var(--font-display); font-size: 1.8rem; color: var(--accent); }
+.auth-gate p { color: var(--text-dim); }
+.auth-gate .spinner { width: 36px; height: 36px; border-width: 3px; }
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--surface-600); border-radius: 3px; }
+@media (max-width: 768px) {
+  .sidebar { width: 60px; }
+  .sidebar-brand h1 { font-size: 0; }
+  .sidebar-brand h1::after { content: 'SF'; font-size: 1.2rem; }
+  .sidebar-brand span { display: none; }
+  .nav-item span { display: none; }
+  .nav-item { justify-content: center; padding: 10px; }
+  .main { margin-left: 60px; padding: 20px 16px; }
+  .stats-grid { grid-template-columns: 1fr 1fr; }
+  .action-cell { flex-direction: column; }
+}
+</style>
+</head>
+<body>
+<div class="auth-gate show" id="authGate">
+  <div class="spinner" id="authSpinner"></div>
+  <h2>STREAMFLIX</h2>
+  <p id="authMessage">Verifying access...</p>
+</div>
+<div class="sidebar" id="sidebar">
+  <div class="sidebar-brand">
+    <h1>STREAMFLIX</h1>
+    <span>Admin Panel</span>
+  </div>
+  <nav class="sidebar-nav">
+    <button class="nav-item active" data-page="dashboard">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+      <span>Dashboard</span>
+    </button>
+    <button class="nav-item" data-page="videos">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+      <span>Videos</span>
+    </button>
+    <button class="nav-item" data-page="upload">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/></svg>
+      <span>Upload</span>
+    </button>
+    <button class="nav-item" data-page="users">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z"/></svg>
+      <span>Users</span>
+    </button>
+  </nav>
+  <div class="sidebar-footer" id="sidebarUser">Loading...</div>
+</div>
+<div class="main" id="mainContent">
+  <div class="page active" id="page-dashboard">
+    <div class="page-header"><h2>Dashboard</h2><p>Overview of your StreamFlix instance.</p></div>
+    <div class="stats-grid" id="statsGrid">
+      <div class="stat-card"><div class="label">Total Videos</div><div class="value" id="statVideos">—</div></div>
+      <div class="stat-card"><div class="label">Total Users</div><div class="value" id="statUsers">—</div></div>
+      <div class="stat-card"><div class="label">Admins</div><div class="value" id="statAdmins">—</div></div>
+    </div>
+    <div class="page-header" style="margin-bottom:16px"><h3 style="font-family:var(--font-display);font-size:1.1rem;">Recent Uploads</h3></div>
+    <div class="table-container"><table><thead><tr><th>Title</th><th>Uploaded</th></tr></thead><tbody id="recentVideosBody"></tbody></table></div>
+  </div>
+  <div class="page" id="page-videos">
+    <div class="page-header"><h2>Videos</h2><p>Manage all uploaded videos.</p></div>
+    <div class="table-container"><table><thead><tr><th>Title</th><th>Uploader</th><th>Date</th><th>Actions</th></tr></thead><tbody id="videosBody"></tbody></table></div>
+  </div>
+  <div class="page" id="page-upload">
+    <div class="page-header"><h2>Upload Video</h2><p>Upload a new video for transcoding and streaming.</p></div>
+    <div class="upload-zone" id="uploadZone">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/></svg>
+      <p>Drag & drop a video file here, or click to browse</p>
+      <div class="filename" id="selectedFile"></div>
+      <input type="file" id="fileInput" accept="video/*" style="display:none">
+    </div>
+    <div class="form-group"><label>Title</label><input type="text" id="uploadTitle" placeholder="Video title"></div>
+    <div class="form-group"><label>Description</label><textarea id="uploadDesc" placeholder="Video description"></textarea></div>
+    <button class="btn-primary" id="uploadBtn">Upload</button>
+    <div class="progress-bar" id="uploadProgress" style="display:none"><div class="fill" id="uploadProgressFill"></div></div>
+  </div>
+  <div class="page" id="page-users">
+    <div class="page-header"><h2>Users</h2><p>Manage user roles and permissions.</p></div>
+    <div class="table-container"><table><thead><tr><th>Email</th><th>Role</th><th>Registered</th><th>Last Login</th><th>Actions</th></tr></thead><tbody id="usersBody"></tbody></table></div>
+  </div>
+</div>
+<div class="modal-overlay" id="confirmModal">
+  <div class="modal">
+    <h3 id="modalTitle">Confirm</h3>
+    <p id="modalMessage">Are you sure?</p>
+    <div class="modal-actions">
+      <button class="btn-ghost" id="modalCancel">Cancel</button>
+      <button class="btn-primary" id="modalConfirm" style="background:var(--error)">Confirm</button>
+    </div>
+  </div>
+</div>
+<div class="toast-container" id="toastContainer"></div>
+<script>
+const API = '/api/v1';
+let currentUser = null;
+function toast(msg, type = 'success') {
+  const el = document.createElement('div');
+  el.className = 'toast ' + type;
+  el.textContent = msg;
+  document.getElementById('toastContainer').appendChild(el);
+  setTimeout(() => el.remove(), 3500);
+}
+function $(id) { return document.getElementById(id); }
+
+function authFetch(url, options = {}) {
+  const token = localStorage.getItem('token');
+  if (!token) {
+    window.location.href = '/login?redirect=' + encodeURIComponent(window.location.pathname);
+    return Promise.reject(new Error('No token'));
+  }
+  options.headers = options.headers || {};
+  options.headers['Authorization'] = 'Bearer ' + token;
+  return fetch(url, options).then(res => {
+    if (res.status === 401) {
+      localStorage.removeItem('token');
+      window.location.href = '/login?redirect=' + encodeURIComponent(window.location.pathname);
+      throw new Error('unauthorized');
+    }
+    return res;
+  });
+}
+
+async function checkAuth() {
+  try {
+    const res = await authFetch(API + '/auth/me');
+    if (!res.ok) throw new Error('unauthorized');
+    currentUser = await res.json();
+    if (currentUser.role !== 'ADMIN') {
+      $('authGate').innerHTML = '<h2>Access Denied</h2><p>You do not have admin privileges.</p><a href="/" style="color:var(--accent);margin-top:12px;">Go to Home</a>';
+      return;
+    }
+    $('authGate').classList.remove('show');
+    $('sidebarUser').textContent = currentUser.email;
+    init();
+  } catch {
+    window.location.href = '/login?redirect=' + encodeURIComponent(window.location.pathname);
+  }
+}
+
+document.querySelectorAll('.nav-item').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    $(`page-${btn.dataset.page}`).classList.add('active');
+  });
+});
+
+$('uploadZone').addEventListener('click', () => $('fileInput').click());
+$('uploadZone').addEventListener('dragover', e => { e.preventDefault(); $('uploadZone').classList.add('dragover'); });
+$('uploadZone').addEventListener('dragleave', () => $('uploadZone').classList.remove('dragover'));
+$('uploadZone').addEventListener('drop', e => { e.preventDefault(); $('uploadZone').classList.remove('dragover'); if (e.dataTransfer.files.length) $('fileInput').files = e.dataTransfer.files; updateFile(); });
+$('fileInput').addEventListener('change', updateFile);
+function updateFile() {
+  const f = $('fileInput').files[0];
+  $('selectedFile').textContent = f ? f.name : '';
+}
+$('uploadBtn').addEventListener('click', async () => {
+  const file = $('fileInput').files[0];
+  const title = $('uploadTitle').value.trim();
+  const desc = $('uploadDesc').value.trim();
+  if (!file || !title) { toast('File and title are required.', 'error'); return; }
+  const form = new FormData();
+  form.append('file', file);
+  form.append('title', title);
+  form.append('description', desc);
+  const token = localStorage.getItem('token');
+  const xhr = new XMLHttpRequest();
+  xhr.open('POST', API + '/admin/videos', true);
+  xhr.setRequestHeader('Authorization', 'Bearer ' + (token || ''));
+  xhr.upload.onprogress = e => {
+    if (e.lengthComputable) {
+      $('uploadProgress').style.display = 'block';
+      $('uploadProgressFill').style.width = (e.loaded / e.total * 100) + '%';
+    }
+  };
+  xhr.onload = () => {
+    $('uploadProgress').style.display = 'none';
+    $('uploadProgressFill').style.width = '0%';
+    if (xhr.status === 201) {
+      toast('Video uploaded successfully');
+      $('fileInput').value = ''; $('uploadTitle').value = ''; $('uploadDesc').value = ''; $('selectedFile').textContent = '';
+      loadDashboard();
+    } else {
+      toast('Upload failed: ' + (JSON.parse(xhr.responseText||'{}').message || xhr.statusText), 'error');
+    }
+  };
+  xhr.onerror = () => { $('uploadProgress').style.display = 'none'; toast('Upload failed', 'error'); };
+  xhr.send(form);
+});
+
+let modalResolve = null;
+$('modalCancel').addEventListener('click', () => { $('confirmModal').classList.remove('open'); if (modalResolve) modalResolve(false); });
+$('modalConfirm').addEventListener('click', () => { $('confirmModal').classList.remove('open'); if (modalResolve) modalResolve(true); });
+function confirm(title, msg, dangerLabel) {
+  return new Promise(resolve => {
+    modalResolve = resolve;
+    $('modalTitle').textContent = title;
+    $('modalMessage').textContent = msg;
+    $('modalConfirm').textContent = dangerLabel || 'Confirm';
+    $('confirmModal').classList.add('open');
+  });
+}
+
+async function loadDashboard() {
+  try {
+    const res = await authFetch(API + '/admin/dashboard');
+    if (!res.ok) throw new Error('Failed');
+    const data = await res.json();
+    $('statVideos').textContent = data.totalVideos;
+    $('statUsers').textContent = data.totalUsers;
+    $('statAdmins').textContent = data.adminCount;
+    $('recentVideosBody').innerHTML = (data.recentVideos||[]).map(v =>
+      `<tr><td>${esc(v.title||'')}</td><td>${v.uploadedAt ? new Date(v.uploadedAt).toLocaleDateString() : '—'}</td></tr>`
+    ).join('') || '<tr><td colspan="2">No recent uploads</td></tr>';
+  } catch { toast('Failed to load dashboard', 'error'); }
+}
+
+async function loadVideos() {
+  try {
+    const res = await authFetch(API + '/admin/videos');
+    if (!res.ok) throw new Error('Failed');
+    const videos = await res.json();
+    $('videosBody').innerHTML = videos.map(v =>
+      `<tr>
+        <td>${esc(v.title||'')}</td>
+        <td>${v.uploadedBy ? esc(v.uploadedBy.email) : '—'}</td>
+        <td>${v.uploadedAt ? new Date(v.uploadedAt).toLocaleDateString() : '—'}</td>
+        <td class="action-cell">
+          <button class="btn-sm btn-danger" onclick="deleteVideo('${v.videoId}','${esc(v.title||'')}')">Delete</button>
+        </td>
+      </tr>`
+    ).join('') || '<tr><td colspan="4">No videos found</td></tr>';
+  } catch { toast('Failed to load videos', 'error'); }
+}
+
+async function deleteVideo(id, title) {
+  const ok = await confirm('Delete Video', `Permanently delete "${title}"? This removes the raw file and all transcoded HLS assets.`, 'Delete');
+  if (!ok) return;
+  try {
+    const res = await authFetch(API + '/admin/videos/' + id, { method: 'DELETE' });
+    if (!res.ok) throw new Error('Failed');
+    toast('Video deleted');
+    loadVideos(); loadDashboard();
+  } catch { toast('Failed to delete video', 'error'); }
+}
+
+async function loadUsers() {
+  try {
+    const res = await authFetch(API + '/admin/users');
+    if (!res.ok) throw new Error('Failed');
+    const users = await res.json();
+    $('usersBody').innerHTML = users.map(u =>
+      `<tr>
+        <td>${esc(u.email)}</td>
+        <td><span class="role-badge ${u.role === 'ADMIN' ? 'admin' : 'user'}">${u.role}</span></td>
+        <td>${u.createdAt ? new Date(u.createdAt).toLocaleDateString() : '—'}</td>
+        <td>${u.lastLoginAt ? new Date(u.lastLoginAt).toLocaleDateString() : '—'}</td>
+        <td class="action-cell">
+          ${u.role === 'ADMIN'
+            ? `<button class="btn-sm btn-warning" onclick="changeRole('${u.id}','${u.email}','USER')">Demote</button>`
+            : `<button class="btn-sm btn-success" onclick="changeRole('${u.id}','${u.email}','ADMIN')">Promote</button>`
+          }
+        </td>
+      </tr>`
+    ).join('');
+  } catch { toast('Failed to load users', 'error'); }
+}
+
+async function changeRole(id, email, newRole) {
+  const action = newRole === 'ADMIN' ? 'promote' : 'demote';
+  const ok = await confirm('Change Role', `${action} "${email}" to ${newRole}?`, action === 'promote' ? 'Promote' : 'Demote');
+  if (!ok) return;
+  try {
+    const res = await authFetch(API + '/admin/users/' + id + '/role', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ role: newRole })
+    });
+    if (!res.ok) throw new Error('Failed');
+    toast(`User ${action}d to ${newRole}`);
+    loadUsers();
+  } catch { toast('Failed to change role', 'error'); }
+}
+
+function esc(s) { const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+
+function init() {
+  loadDashboard();
+  document.querySelector('[data-page="dashboard"]').addEventListener('click', loadDashboard);
+  document.querySelector('[data-page="videos"]').addEventListener('click', loadVideos);
+  document.querySelector('[data-page="users"]').addEventListener('click', loadUsers);
+}
+checkAuth();
+</script>
+
+</body>
+</html>

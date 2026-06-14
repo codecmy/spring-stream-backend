@@ -1,7 +1,9 @@
 const API_BASE = '/api/v1/videos'
 
 export async function fetchVideos() {
-  const res = await fetch(API_BASE)
+  const token = localStorage.getItem('token')
+  const headers = token ? { Authorization: `Bearer ${token}` } : {}
+  const res = await fetch(API_BASE, { headers })
   if (!res.ok) throw new Error('Failed to fetch videos')
   return res.json()
 }
