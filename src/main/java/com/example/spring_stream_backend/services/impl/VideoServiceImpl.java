@@ -28,10 +28,12 @@ import java.nio.file.Paths;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -135,11 +137,19 @@ public class VideoServiceImpl implements VideoServices {
         if (cached != null) {
             return cached;
         }
+        Video dbVideo = videoRepositories.findById(videoId).orElse(null);
+        if (dbVideo == null || dbVideo.getFilepath() == null) return null;
+        String fp = dbVideo.getFilepath();
+        if (!fp.startsWith("raw/")) return null;
+        String afterRaw = fp.substring(4);
+        int underscoreIdx = afterRaw.indexOf('_');
+        if (underscoreIdx <= 0) return null;
+        String filepathUuid = afterRaw.substring(0, underscoreIdx);
         try {
             Iterable<Result<Item>> results = minioClient.listObjects(
                     ListObjectsArgs.builder()
                             .bucket(hlsBucketName)
-                            .prefix(videoId + "_")
+                            .prefix(filepathUuid + "_")
                             .delimiter("/")
                             .maxKeys(1)
                             .build()
@@ -299,26 +309,50 @@ public class VideoServiceImpl implements VideoServices {
 
     @Override
     public List<Video> getAllVideo() {
-        List<Video> hlsVideos = listHlsVideos();
-        if (!hlsVideos.isEmpty()) {
-            mergeDbTitles(hlsVideos);
-            return hlsVideos;
+        List<Video> dbVideos = videoRepositories.findAll();
+        if (dbVideos.isEmpty()) {
+            return dbVideos;
         }
-        List<Video> rawVideos = listRawVideos();
-        if (!rawVideos.isEmpty()) {
-            mergeDbTitles(rawVideos);
-            return rawVideos;
-        }
-        return videoRepositories.findAll();
-    }
 
-    private void mergeDbTitles(List<Video> videos) {
-        for (Video v : videos) {
-            Video dbVideo = videoRepositories.findById(v.getVideoId()).orElse(null);
-            if (dbVideo != null && dbVideo.getTitle() != null && !dbVideo.getTitle().isBlank()) {
-                v.setTitle(dbVideo.getTitle());
+        Set<String> hlsFolders = getHlsFolderNames();
+
+        for (Video v : dbVideos) {
+            String fp = v.getFilepath();
+            if (fp != null && fp.startsWith("raw/")) {
+                String key = fp.substring(4);
+                int dotIdx = key.lastIndexOf('.');
+                if (dotIdx > 0) key = key.substring(0, dotIdx);
+
+                if (hlsFolders.contains(key)) {
+                    v.setContentType("application/vnd.apple.mpegurl");
+                    hlsPrefixCache.put(v.getVideoId(), key);
+                }
             }
         }
+
+        return dbVideos;
+    }
+
+    private Set<String> getHlsFolderNames() {
+        Set<String> folders = new HashSet<>();
+        try {
+            Iterable<Result<Item>> results = minioClient.listObjects(
+                    ListObjectsArgs.builder()
+                            .bucket(hlsBucketName)
+                            .delimiter("/")
+                            .build()
+            );
+            for (Result<Item> result : results) {
+                Item item = result.get();
+                if (!item.isDir()) continue;
+                String name = item.objectName();
+                String folder = name.endsWith("/") ? name.substring(0, name.length() - 1) : name;
+                folders.add(folder);
+            }
+        } catch (Exception e) {
+            System.err.println("getHlsFolderNames failed: " + e.getMessage());
+        }
+        return folders;
     }
 
     private List<Video> listHlsVideos() {

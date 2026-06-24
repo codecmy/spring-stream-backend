@@ -8,7 +8,8 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.amqp.core.Queue;
 import org.springframework.amqp.core.Binding;
 import org.springframework.amqp.core.BindingBuilder;
-import org.springframework.amqp.core.QueueBuilder;
+import java.util.HashMap;
+import java.util.Map;
 @Configuration
 public class RabbitConfig {
     public static final String EXCHANGE = "video.exchange";
@@ -20,12 +21,19 @@ public class RabbitConfig {
         return new DirectExchange(EXCHANGE);
     }
 
+    public static final String DLQ = QUEUE + ".dlq";
+
     @Bean
     public Queue queue() {
-        return QueueBuilder.durable(QUEUE)
-                .deadLetterExchange("")
-                .deadLetterRoutingKey("video.processing.dlq")
-                .build();
+        Map<String, Object> args = new HashMap<>();
+        args.put("x-dead-letter-exchange", "");
+        args.put("x-dead-letter-routing-key", DLQ);
+        return new Queue(QUEUE, true, false, false, args);
+    }
+
+    @Bean
+    public Queue dlq() {
+        return new Queue(DLQ, true);
     }
     @Bean
     public Binding binding(Queue queue, DirectExchange exchange) {

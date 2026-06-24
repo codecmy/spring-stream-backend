@@ -27,7 +27,6 @@ import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/v1/videos")
-@CrossOrigin(origins = "http://localhost:63342/")
 public class VideoController {
     private final VideoServices videoServices;
     private final MinioClient minioClient;

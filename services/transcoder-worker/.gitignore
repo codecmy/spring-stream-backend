@@ -29,23 +29,5 @@ build/
 !**/src/main/**/build/
 !**/src/test/**/build/
 
-######## Temporary Intermediate Files ############
-login.json
-register.json
-test.mp4
 ### VS Code ###
 .vscode/
-
-### Environment Variables ###
-.env
-.env.local
-.env.*.local
-
-### Video Files ###
-Video/
-*.mp4
-*.mkv
-*.avi
-*.mov
-*.ts
-*.m3u8

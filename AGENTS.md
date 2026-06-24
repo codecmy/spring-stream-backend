@@ -23,6 +23,19 @@ docker compose up -d                # full stack (needs .env)
 - Single test class: `SpringStreamBackendApplicationTests` — a `@SpringBootTest` that calls `processVideo()` with a hardcoded video ID. It runs FFmpeg locally and is closer to a manual integration test.
 - No unit tests, no mocking.
 - `processVideo()` on Windows runs via `cmd.exe /c ffmpeg ...`. On files stored in MinIO (path starts with `raw/`), it's a no-op (returns videoId).
+- Bogart change — `processVideo()` on Windows runs via `cmd.exe /c ffmpeg ...`.
+
+## Multi-resolution FFmpeg
+`VideoProcessingService.java` (worker) splits video+audio in `filter_complex`:
+```
+[0:v]split=4[v1][v2][v3][v4];[0:a]asplit=4[a1][a2][a3][a4];
+[v1]scale=w=640:h=-2[v360p]; ...
+```
+- Each variant gets its own audio stream (`[a1]..[a4]`). **Single `-map "a:0"` causes exit code 234** (`Same elementary stream found more than once in two different variant definitions`).
+- Output dir pattern: `v%v` → `v0`/`v1`/`v2`/`v3`, matching frontend `PlayerPage.jsx` quality selector values.
+
+## Known issue
+`processVideo()` on Windows runs via `cmd.exe /c ffmpeg ...`. On files stored in MinIO (path starts with `raw/`), it's a no-op (returns videoId).
 
 ## Docker
 - MySQL exposed on **3307** (not 3306).

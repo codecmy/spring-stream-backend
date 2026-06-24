@@ -1,0 +1,28 @@
+spring:
+  application:
+    name: demo
+  rabbitmq:
+    host: localhost
+    port: 5672
+    username: guest
+    password: guest
+    listener:
+      simple:
+        retry:
+          enabled: true
+          max-attempts: 3
+          initial-interval: 5000
+          multiplier: 2
+          max-interval: 60000
+        default-requeue-rejected: false
+
+  minio:
+    url: http://localhost:9000
+    access-key: admin
+    secret-key: admin123
+    bucket: videos
+    hls-bucket: video-hls
+
+  files:
+    video: /tmp/videos
+    hls: /tmp/hls

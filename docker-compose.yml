@@ -3,6 +3,7 @@ services:
   rabbitmq:
     image: rabbitmq:3-management
     container_name: rabbitmq
+    mem_limit: 256m
     ports:
       - "5672:5672"
       - "15672:15672"
@@ -29,6 +30,7 @@ services:
   minio:
     image: minio/minio
     container_name: minio
+    mem_limit: 512m
     command: server /data --console-address ":9001"
     environment:
       MINIO_ROOT_USER: admin
@@ -73,6 +75,7 @@ services:
   mysql:
     image: mysql:8.0
     container_name: mysql
+    mem_limit: 1g
     environment:
       MYSQL_ROOT_PASSWORD: root
       MYSQL_DATABASE: streamdb
@@ -93,6 +96,7 @@ services:
   backend:
     image: spring-stream-backend:latest
     container_name: backend
+    mem_limit: 1g
     ports:
       - "8081:8081"
     environment:
@@ -122,6 +126,7 @@ services:
   nginx:
     image: nginx:latest
     container_name: nginx
+    mem_limit: 128m
     ports:
       - "80:80"
     volumes:
@@ -137,25 +142,28 @@ services:
       - stream-net
 
   worker:
-     image: transcoder-worker:latest
-     depends_on:
-       rabbitmq:
-         condition: service_healthy
-       mysql:
-         condition: service_healthy
-       minio-init:
-         condition: service_started
-     environment:
-       SPRING_RABBITMQ_HOST: rabbitmq
-       SPRING_RABBITMQ_PORT: 5672
-       SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/streamdb
-       SPRING_DATASOURCE_USERNAME: streamuser
-       SPRING_DATASOURCE_PASSWORD: streampass
-       MINIO_URL: http://minio:9000
-       MINIO_ACCESS_KEY: admin
-       MINIO_SECRET_KEY: password
-     networks:
-       - stream-net
+    build: ./services/transcoder-worker
+    image: transcoder-worker:latest
+    mem_limit: 3g
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      minio-init:
+        condition: service_started
+    environment:
+      SPRING_RABBITMQ_HOST: rabbitmq
+      SPRING_RABBITMQ_PORT: 5672
+      SPRING_RABBITMQ_USERNAME: guest
+      SPRING_RABBITMQ_PASSWORD: guest
+      SPRING_MINIO_URL: http://minio:9000
+      SPRING_MINIO_ACCESS_KEY: admin
+      SPRING_MINIO_SECRET_KEY: password
+      SPRING_MINIO_BUCKET: videos
+      SPRING_MINIO_HLS_BUCKET: video-hls
+      SPRING_FILES_VIDEO: /tmp/videos
+      SPRING_FILES_HLS: /tmp/hls
+    networks:
+      - stream-net
 
 networks:
   stream-net:
