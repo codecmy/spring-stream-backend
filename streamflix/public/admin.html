@@ -60,43 +60,32 @@ button { cursor: pointer; font-family: inherit; border: none; background: none; 
 }
 .sidebar-brand h1 {
   font-family: var(--font-display);
-  font-size: 1.4rem;
+  font-size: 1.3rem;
   font-weight: 800;
-  color: var(--accent);
+  background: linear-gradient(135deg, var(--accent), #ff6b6b);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
   letter-spacing: -0.02em;
 }
-.sidebar-brand span {
-  font-size: 0.72rem;
-  color: var(--text-dim);
-  text-transform: uppercase;
-  letter-spacing: 0.15em;
-  display: block;
-  margin-top: 2px;
-}
-.sidebar-nav { flex: 1; padding: 12px 10px; }
+.sidebar-brand small { display: block; font-size: 0.65rem; color: var(--text-dim); margin-top: 2px; text-transform: uppercase; letter-spacing: 0.08em; }
+nav { flex: 1; padding: 12px 0; }
 .nav-item {
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 10px 14px;
-  border-radius: 8px;
+  width: 100%;
+  padding: 14px 20px;
   font-size: 0.85rem;
   font-weight: 500;
-  color: var(--text-dim);
-  transition: all 0.15s ease;
-  margin-bottom: 2px;
-  width: 100%;
-  text-align: left;
+  color: var(--surface-100);
+  transition: all 0.15s;
+  border-left: 3px solid transparent;
 }
-.nav-item:hover { background: var(--surface-700); color: var(--text); }
-.nav-item.active { background: var(--surface-700); color: var(--accent); }
-.nav-item svg { width: 18px; height: 18px; flex-shrink: 0; }
-.sidebar-footer {
-  padding: 16px 20px;
-  border-top: 1px solid var(--surface-700);
-  font-size: 0.75rem;
-  color: var(--surface-200);
-}
+.nav-item svg { width: 20px; height: 20px; flex-shrink: 0; }
+.nav-item:hover { background: var(--surface-800); color: var(--text); }
+.nav-item.active { background: var(--surface-800); color: var(--text); border-left-color: var(--accent); }
+.sidebar-footer { padding: 16px 20px; border-top: 1px solid var(--surface-700); font-size: 0.8rem; color: var(--text-dim); word-break: break-all; }
 .main {
   margin-left: var(--sidebar-w);
   flex: 1;
@@ -105,198 +94,211 @@ button { cursor: pointer; font-family: inherit; border: none; background: none; 
 }
 .page { display: none; }
 .page.active { display: block; }
-.page-header { margin-bottom: 28px; }
-.page-header h2 {
-  font-family: var(--font-display);
-  font-size: 1.6rem;
-  font-weight: 700;
-  letter-spacing: -0.02em;
-}
-.page-header p { color: var(--text-dim); margin-top: 4px; font-size: 0.9rem; }
-.stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 32px; }
+.page-header { margin-bottom: 24px; }
+.page-header h2 { font-family: var(--font-display); font-size: 1.6rem; font-weight: 700; }
+.page-header p { font-size: 0.85rem; color: var(--text-dim); margin-top: 4px; }
+.stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; margin-bottom: 32px; }
 .stat-card {
   background: var(--surface-800);
   border: 1px solid var(--surface-700);
   border-radius: 12px;
-  padding: 20px 24px;
+  padding: 20px;
 }
 .stat-card .label { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-dim); }
-.stat-card .value { font-size: 2rem; font-weight: 700; margin-top: 6px; font-family: var(--font-display); }
-.table-container {
-  background: var(--surface-800);
-  border: 1px solid var(--surface-700);
-  border-radius: 12px;
-  overflow: hidden;
-}
+.stat-card .value { font-family: var(--font-display); font-size: 2rem; font-weight: 700; margin-top: 8px; }
+.table-container { overflow-x: auto; }
 table { width: 100%; border-collapse: collapse; }
-thead { background: var(--surface-700); }
-th { text-align: left; padding: 12px 16px; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-dim); font-weight: 600; }
-td { padding: 12px 16px; font-size: 0.85rem; border-top: 1px solid var(--surface-700); }
-tr:hover td { background: rgba(255,255,255,0.02); }
-.role-badge {
-  display: inline-flex;
-  align-items: center;
-  padding: 2px 10px;
-  border-radius: 100px;
-  font-size: 0.7rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-}
+th { text-align: left; padding: 12px 16px; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-dim); font-weight: 600; border-bottom: 1px solid var(--surface-700); }
+td { padding: 12px 16px; font-size: 0.85rem; border-bottom: 1px solid var(--surface-800); color: var(--text); }
+.action-cell { white-space: nowrap; }
+.role-badge { display: inline-block; padding: 2px 10px; border-radius: 999px; font-size: 0.7rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; }
 .role-badge.admin { background: rgba(229,9,20,0.15); color: var(--accent); }
-.role-badge.user { background: rgba(34,197,94,0.12); color: var(--success); }
-.btn-sm {
-  padding: 5px 12px;
-  border-radius: 6px;
-  font-size: 0.75rem;
-  font-weight: 600;
+.role-badge.user { background: rgba(34,197,94,0.15); color: var(--success); }
+.btn-primary {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 10px 24px; background: var(--accent); color: #fff;
+  border-radius: 8px; font-size: 0.85rem; font-weight: 600;
+  transition: background 0.15s;
+}
+.btn-primary:hover { background: var(--accent-hover); }
+.btn-sm { padding: 6px 14px; font-size: 0.8rem; border-radius: 6px; font-weight: 500; transition: all 0.15s; }
+.btn-sm + .btn-sm { margin-left: 8px; }
+.btn-danger { background: rgba(239,68,68,0.15); color: var(--error); }
+.btn-danger:hover { background: rgba(239,68,68,0.3); }
+.btn-warning { background: rgba(245,158,11,0.15); color: var(--warning); }
+.btn-warning:hover { background: rgba(245,158,11,0.3); }
+.btn-success { background: rgba(34,197,94,0.15); color: var(--success); }
+.btn-success:hover { background: rgba(34,197,94,0.3); }
+.btn-ghost { padding: 8px 16px; color: var(--text-dim); border-radius: 6px; font-size: 0.85rem; transition: all 0.15s; }
+.btn-ghost:hover { background: var(--surface-700); color: var(--text); }
+.btn-accent-outline {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 8px 16px; border: 1px solid var(--accent); color: var(--accent);
+  border-radius: 8px; font-size: 0.8rem; font-weight: 600;
   transition: all 0.15s;
 }
-.btn-danger { background: rgba(239,68,68,0.15); color: var(--error); }
-.btn-danger:hover { background: rgba(239,68,68,0.25); }
-.btn-warning { background: rgba(245,158,11,0.15); color: var(--warning); }
-.btn-warning:hover { background: rgba(245,158,11,0.25); }
-.btn-success { background: rgba(34,197,94,0.15); color: var(--success); }
-.btn-success:hover { background: rgba(34,197,94,0.25); }
-.action-cell { display: flex; gap: 6px; }
+.btn-accent-outline:hover { background: rgba(229,9,20,0.1); }
+
 .upload-zone {
   border: 2px dashed var(--surface-400);
   border-radius: 12px;
-  padding: 60px 20px;
+  padding: 40px 20px;
   text-align: center;
-  transition: all 0.2s;
   cursor: pointer;
-  background: var(--surface-800);
-  margin-bottom: 20px;
+  transition: all 0.2s;
+  margin-bottom: 24px;
 }
 .upload-zone:hover, .upload-zone.dragover { border-color: var(--accent); background: rgba(229,9,20,0.05); }
 .upload-zone svg { width: 40px; height: 40px; color: var(--surface-200); margin-bottom: 12px; }
 .upload-zone p { color: var(--text-dim); font-size: 0.9rem; }
 .upload-zone .filename { color: var(--accent); font-weight: 600; margin-top: 8px; }
+
+.form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.form-grid .full-width { grid-column: 1 / -1; }
 .form-group { margin-bottom: 16px; }
 .form-group label { display: block; font-size: 0.8rem; font-weight: 600; margin-bottom: 6px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.05em; }
-.form-group input, .form-group textarea {
+.form-group input, .form-group textarea, .form-group select {
   width: 100%;
   padding: 10px 14px;
   background: var(--surface-800);
-  border: 1px solid var(--surface-700);
+  border: 1px solid var(--surface-600);
   border-radius: 8px;
   color: var(--text);
-  font-family: var(--font-body);
   font-size: 0.9rem;
+  font-family: var(--font-body);
   transition: border-color 0.15s;
 }
-.form-group input:focus, .form-group textarea:focus { outline: none; border-color: var(--accent); }
+.form-group input:focus, .form-group textarea:focus, .form-group select:focus { outline: none; border-color: var(--accent); }
 .form-group textarea { min-height: 80px; resize: vertical; }
-.btn-primary {
-  padding: 10px 24px;
-  background: var(--accent);
-  color: white;
+.form-group select { cursor: pointer; }
+.form-group select option { background: var(--surface-800); color: var(--text); }
+
+.type-toggle {
+  display: flex; gap: 0; margin-bottom: 20px;
+  background: var(--surface-800);
+  border: 1px solid var(--surface-600);
   border-radius: 8px;
+  overflow: hidden;
+  width: fit-content;
+}
+.type-btn {
+  padding: 10px 28px;
   font-size: 0.85rem;
   font-weight: 600;
+  color: var(--text-dim);
   transition: all 0.15s;
+  cursor: pointer;
 }
-.btn-primary:hover { background: var(--accent-hover); }
-.btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
-.progress-bar {
-  height: 4px;
-  background: var(--surface-700);
-  border-radius: 2px;
-  margin-top: 12px;
-  overflow: hidden;
+.type-btn.active { background: var(--accent); color: #fff; }
+.type-btn:not(.active):hover { background: var(--surface-700); color: var(--text); }
+
+.genre-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+  gap: 8px;
+  margin-bottom: 16px;
 }
-.progress-bar .fill {
-  height: 100%;
-  background: var(--accent);
-  width: 0%;
-  transition: width 0.3s;
+.genre-chip {
+  display: flex; align-items: center; gap: 8px;
+  padding: 8px 12px;
+  background: var(--surface-800);
+  border: 1px solid var(--surface-600);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.15s;
+  font-size: 0.8rem;
+  color: var(--text-dim);
 }
+.genre-chip:hover { border-color: var(--surface-200); }
+.genre-chip.selected { border-color: var(--accent); background: rgba(229,9,20,0.1); color: var(--text); }
+.genre-chip input { display: none; }
+.genre-chip .check { width: 16px; height: 16px; border: 2px solid var(--surface-400); border-radius: 4px; display: flex; align-items: center; justify-content: center; transition: all 0.15s; flex-shrink: 0; }
+.genre-chip.selected .check { background: var(--accent); border-color: var(--accent); }
+.genre-chip.selected .check::after { content: '\2713'; color: #fff; font-size: 11px; font-weight: 700; }
+
+.cast-row {
+  display: flex; gap: 10px; margin-bottom: 8px; align-items: center;
+}
+.cast-row input { flex: 1; }
+.cast-row .remove-cast { color: var(--error); padding: 8px; border-radius: 6px; transition: background 0.15s; font-size: 1.1rem; }
+.cast-row .remove-cast:hover { background: rgba(239,68,68,0.15); }
+.add-cast-btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 8px 16px; color: var(--accent); font-size: 0.8rem; font-weight: 600;
+  border-radius: 6px; border: 1px dashed var(--accent); transition: all 0.15s;
+}
+.add-cast-btn:hover { background: rgba(229,9,20,0.1); }
+
+.series-section { display: none; margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--surface-700); }
+.series-section.visible { display: block; }
+.inline-row { display: flex; gap: 10px; align-items: flex-end; }
+.inline-row .form-group { flex: 1; margin-bottom: 0; }
+.inline-row button { flex-shrink: 0; margin-bottom: 0; }
+
+.progress-bar { width: 100%; height: 6px; background: var(--surface-700); border-radius: 999px; overflow: hidden; margin-top: 16px; }
+.progress-bar .fill { height: 100%; width: 0; background: var(--accent); border-radius: 999px; transition: width 0.2s; }
+
+.series-card {
+  background: var(--surface-800);
+  border: 1px solid var(--surface-700);
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 12px;
+  display: flex; justify-content: space-between; align-items: center;
+}
+.series-card h3 { font-family: var(--font-display); font-size: 1.1rem; font-weight: 600; }
+.series-card .meta { font-size: 0.8rem; color: var(--text-dim); margin-top: 4px; }
+.series-card .actions { display: flex; gap: 8px; }
+
 .modal-overlay {
   display: none;
-  position: fixed;
-  inset: 0;
-  background: rgba(0,0,0,0.6);
-  backdrop-filter: blur(4px);
-  z-index: 200;
-  align-items: center;
-  justify-content: center;
+  position: fixed; inset: 0; z-index: 200;
+  background: rgba(0,0,0,0.7);
+  align-items: center; justify-content: center;
 }
 .modal-overlay.open { display: flex; }
 .modal {
-  background: var(--surface-800);
+  background: var(--surface-900);
   border: 1px solid var(--surface-700);
   border-radius: 16px;
   padding: 28px;
-  max-width: 440px;
-  width: 90%;
+  width: 100%;
+  max-width: 460px;
 }
-.modal h3 { font-family: var(--font-display); font-size: 1.2rem; margin-bottom: 8px; }
-.modal p { color: var(--text-dim); font-size: 0.9rem; margin-bottom: 20px; line-height: 1.5; }
-.modal-actions { display: flex; gap: 10px; justify-content: flex-end; }
-.btn-ghost { padding: 8px 20px; border-radius: 8px; font-size: 0.8rem; font-weight: 600; color: var(--text-dim); transition: all 0.15s; }
-.btn-ghost:hover { background: var(--surface-700); color: var(--text); }
-.toast-container { position: fixed; top: 20px; right: 20px; z-index: 300; display: flex; flex-direction: column; gap: 8px; }
+.modal h3 { font-family: var(--font-display); font-size: 1.2rem; font-weight: 700; margin-bottom: 4px; }
+.modal p { color: var(--text-dim); font-size: 0.85rem; margin-bottom: 20px; }
+.modal-actions { display: flex; gap: 12px; justify-content: flex-end; margin-top: 20px; }
+
+.toast-container { position: fixed; bottom: 20px; right: 20px; z-index: 300; display: flex; flex-direction: column; gap: 8px; }
 .toast {
-  background: var(--surface-800);
-  border: 1px solid var(--surface-700);
-  border-radius: 10px;
-  padding: 12px 20px;
-  font-size: 0.85rem;
-  animation: slideIn 0.2s ease;
-  max-width: 360px;
-  box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+  padding: 12px 20px; border-radius: 8px; font-size: 0.85rem; font-weight: 500;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+  animation: slideIn 0.3s ease;
 }
-.toast.success { border-left: 3px solid var(--success); }
-.toast.error { border-left: 3px solid var(--error); }
+.toast.success { background: #16a34a; color: #fff; }
+.toast.error { background: #dc2626; color: #fff; }
+.toast.warning { background: #d97706; color: #fff; }
 @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
-.loading { display: flex; align-items: center; justify-content: center; padding: 60px 0; }
-.spinner { width: 28px; height: 28px; border: 2px solid var(--surface-700); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.7s linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }
-.empty-state { text-align: center; padding: 60px 20px; color: var(--text-dim); }
-.auth-gate {
-  display: none;
-  position: fixed;
-  inset: 0;
-  background: var(--bg);
-  z-index: 500;
-  align-items: center;
-  justify-content: center;
-  flex-direction: column;
-  gap: 16px;
+.loading { text-align: center; padding: 40px; color: var(--text-dim); }
+
+.series-detail-modal .playlist-list { margin-top: 12px; }
+.series-detail-modal .playlist-item {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 10px 14px; background: var(--surface-800); border-radius: 8px; margin-bottom: 6px;
 }
-.auth-gate.show { display: flex; }
-.auth-gate h2 { font-family: var(--font-display); font-size: 1.8rem; color: var(--accent); }
-.auth-gate p { color: var(--text-dim); }
-.auth-gate .spinner { width: 36px; height: 36px; border-width: 3px; }
-::-webkit-scrollbar { width: 6px; }
-::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: var(--surface-600); border-radius: 3px; }
-@media (max-width: 768px) {
-  .sidebar { width: 60px; }
-  .sidebar-brand h1 { font-size: 0; }
-  .sidebar-brand h1::after { content: 'SF'; font-size: 1.2rem; }
-  .sidebar-brand span { display: none; }
-  .nav-item span { display: none; }
-  .nav-item { justify-content: center; padding: 10px; }
-  .main { margin-left: 60px; padding: 20px 16px; }
-  .stats-grid { grid-template-columns: 1fr 1fr; }
-  .action-cell { flex-direction: column; }
-}
+.series-detail-modal .playlist-item span { font-size: 0.85rem; }
 </style>
 </head>
 <body>
-<div class="auth-gate show" id="authGate">
-  <div class="spinner" id="authSpinner"></div>
-  <h2>STREAMFLIX</h2>
-  <p id="authMessage">Verifying access...</p>
-</div>
-<div class="sidebar" id="sidebar">
+<div id="authGate" class="main" style="margin-left:0;display:flex;align-items:center;justify-content:center;"><div style="text-align:center;"><div style="border:3px solid var(--surface-600);border-top-color:var(--accent);border-radius:50%;width:32px;height:32px;animation:spin .8s linear infinite;margin:0 auto 16px;"></div><p style="color:var(--text-dim);">Checking authorization...</p></div></div>
+
+<aside class="sidebar" id="sidebar" style="display:none;">
   <div class="sidebar-brand">
-    <h1>STREAMFLIX</h1>
-    <span>Admin Panel</span>
+    <h1>StreamFlix</h1>
+    <small>Admin Panel</small>
   </div>
-  <nav class="sidebar-nav">
+  <nav>
     <button class="nav-item active" data-page="dashboard">
       <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
       <span>Dashboard</span>
@@ -309,14 +311,20 @@ tr:hover td { background: rgba(255,255,255,0.02); }
       <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/></svg>
       <span>Upload</span>
     </button>
+    <button class="nav-item" data-page="series">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/></svg>
+      <span>Series</span>
+    </button>
     <button class="nav-item" data-page="users">
       <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z"/></svg>
       <span>Users</span>
     </button>
   </nav>
   <div class="sidebar-footer" id="sidebarUser">Loading...</div>
-</div>
+</aside>
+
 <div class="main" id="mainContent">
+  <!-- Dashboard -->
   <div class="page active" id="page-dashboard">
     <div class="page-header"><h2>Dashboard</h2><p>Overview of your StreamFlix instance.</p></div>
     <div class="stats-grid" id="statsGrid">
@@ -327,28 +335,144 @@ tr:hover td { background: rgba(255,255,255,0.02); }
     <div class="page-header" style="margin-bottom:16px"><h3 style="font-family:var(--font-display);font-size:1.1rem;">Recent Uploads</h3></div>
     <div class="table-container"><table><thead><tr><th>Title</th><th>Uploaded</th></tr></thead><tbody id="recentVideosBody"></tbody></table></div>
   </div>
+
+  <!-- Videos -->
   <div class="page" id="page-videos">
     <div class="page-header"><h2>Videos</h2><p>Manage all uploaded videos.</p></div>
-    <div class="table-container"><table><thead><tr><th>Title</th><th>Uploader</th><th>Date</th><th>Actions</th></tr></thead><tbody id="videosBody"></tbody></table></div>
+    <div class="table-container"><table><thead><tr><th>Title</th><th>Type</th><th>Uploader</th><th>Date</th><th>Actions</th></tr></thead><tbody id="videosBody"></tbody></table></div>
   </div>
+
+  <!-- Upload -->
   <div class="page" id="page-upload">
-    <div class="page-header"><h2>Upload Video</h2><p>Upload a new video for transcoding and streaming.</p></div>
+    <div class="page-header"><h2>Upload Video</h2><p>Upload a new video with full metadata.</p></div>
+
     <div class="upload-zone" id="uploadZone">
       <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/></svg>
       <p>Drag & drop a video file here, or click to browse</p>
       <div class="filename" id="selectedFile"></div>
       <input type="file" id="fileInput" accept="video/*" style="display:none">
     </div>
-    <div class="form-group"><label>Title</label><input type="text" id="uploadTitle" placeholder="Video title"></div>
-    <div class="form-group"><label>Description</label><textarea id="uploadDesc" placeholder="Video description"></textarea></div>
-    <button class="btn-primary" id="uploadBtn">Upload</button>
+
+    <div class="form-grid">
+      <div class="full-width form-group"><label>Title</label><input type="text" id="uploadTitle" placeholder="Video title"></div>
+      <div class="full-width form-group"><label>Description</label><textarea id="uploadDesc" placeholder="Short description"></textarea></div>
+    </div>
+
+    <label style="font-size:0.8rem;font-weight:600;margin-bottom:8px;color:var(--text-dim);text-transform:uppercase;letter-spacing:0.05em;display:block;">Content Type</label>
+    <div class="type-toggle" id="typeToggle">
+      <button class="type-btn active" data-type="MOVIE">Movie</button>
+      <button class="type-btn" data-type="EPISODE">Episode</button>
+    </div>
+
+    <div class="form-grid" id="commonFields">
+      <div class="form-group"><label>Duration (min)</label><input type="number" id="uploadDuration" placeholder="e.g. 120" min="0"></div>
+      <div class="form-group"><label>Release Date</label><input type="date" id="uploadReleaseDate"></div>
+      <div class="form-group"><label>Language</label>
+        <input type="text" id="uploadLanguage" list="langList" placeholder="e.g. English">
+        <datalist id="langList">
+          <option value="English"><option value="Hindi"><option value="Spanish"><option value="French">
+          <option value="German"><option value="Japanese"><option value="Korean"><option value="Chinese">
+          <option value="Arabic"><option value="Portuguese"><option value="Russian"><option value="Italian">
+        </datalist>
+      </div>
+      <div class="form-group"><label>IMDB Rating</label><input type="number" id="uploadImdb" placeholder="e.g. 8.5" min="0" max="10" step="0.1"></div>
+      <div class="full-width form-group"><label>Story</label><textarea id="uploadStory" placeholder="Full synopsis / story description"></textarea></div>
+    </div>
+
+    <div class="form-group full-width"><label>Genres</label>
+      <div class="genre-grid" id="genreGrid"></div>
+    </div>
+
+    <div class="form-group full-width"><label>Cast</label>
+      <div id="castContainer"></div>
+      <button class="add-cast-btn" onclick="addCastRow()">+ Add Cast Member</button>
+    </div>
+
+    <div class="series-section" id="episodeSection">
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Series</label>
+          <div class="inline-row">
+            <select id="seriesSelect" onchange="onSeriesChange()"><option value="">Select Series...</option></select>
+            <button class="btn-accent-outline" onclick="openSeriesModal()" style="white-space:nowrap;">+ New</button>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Playlist (Season)</label>
+          <div class="inline-row">
+            <select id="playlistSelect"><option value="">Select Playlist...</option></select>
+            <button class="btn-accent-outline" onclick="openPlaylistModal()" style="white-space:nowrap;">+ New</button>
+          </div>
+        </div>
+        <div class="form-group"><label>Episode #</label><input type="number" id="uploadEpisodeNum" placeholder="e.g. 1" min="1"></div>
+      </div>
+    </div>
+
+    <button class="btn-primary" id="uploadBtn" style="margin-top:20px;">Upload</button>
     <div class="progress-bar" id="uploadProgress" style="display:none"><div class="fill" id="uploadProgressFill"></div></div>
   </div>
+
+  <!-- Series -->
+  <div class="page" id="page-series">
+    <div class="page-header" style="display:flex;justify-content:space-between;align-items:center;">
+      <div><h2>Series</h2><p>Manage TV series and seasons.</p></div>
+      <button class="btn-primary" onclick="openSeriesModal()">+ Create Series</button>
+    </div>
+    <div id="seriesList"></div>
+  </div>
+
+  <!-- Users -->
   <div class="page" id="page-users">
     <div class="page-header"><h2>Users</h2><p>Manage user roles and permissions.</p></div>
     <div class="table-container"><table><thead><tr><th>Email</th><th>Role</th><th>Registered</th><th>Last Login</th><th>Actions</th></tr></thead><tbody id="usersBody"></tbody></table></div>
   </div>
 </div>
+
+<!-- Create Series Modal -->
+<div class="modal-overlay" id="seriesModal">
+  <div class="modal">
+    <h3>Create Series</h3>
+    <p>Add a new TV series.</p>
+    <div class="form-group"><label>Title</label><input type="text" id="seriesTitle" placeholder="Series title"></div>
+    <div class="form-group"><label>Description</label><textarea id="seriesDesc" placeholder="Series description"></textarea></div>
+    <div class="form-group"><label>Studios</label><input type="text" id="seriesStudios" placeholder="e.g. Netflix, HBO"></div>
+    <div class="modal-actions">
+      <button class="btn-ghost" onclick="closeSeriesModal()">Cancel</button>
+      <button class="btn-primary" onclick="saveSeries()">Create</button>
+    </div>
+  </div>
+</div>
+
+<!-- Create Playlist Modal -->
+<div class="modal-overlay" id="playlistModal">
+  <div class="modal">
+    <h3>Create Playlist</h3>
+    <p>Add a new season to a series.</p>
+    <div class="form-group"><label>Series</label>
+      <select id="playlistSeriesSelect"><option value="">Select Series...</option></select>
+    </div>
+    <div class="form-group"><label>Season Number</label><input type="number" id="playlistSeasonNum" placeholder="e.g. 1" min="1"></div>
+    <div class="form-group"><label>Title (optional)</label><input type="text" id="playlistTitle" placeholder="e.g. Season 1"></div>
+    <div class="modal-actions">
+      <button class="btn-ghost" onclick="closePlaylistModal()">Cancel</button>
+      <button class="btn-primary" onclick="savePlaylist()">Create</button>
+    </div>
+  </div>
+</div>
+
+<!-- Series Detail Modal -->
+<div class="modal-overlay series-detail-modal" id="seriesDetailModal">
+  <div class="modal" style="max-width:560px;">
+    <h3 id="detailSeriesTitle">Series</h3>
+    <p id="detailSeriesMeta"></p>
+    <div class="playlist-list" id="detailPlaylistList"></div>
+    <div class="modal-actions">
+      <button class="btn-ghost" onclick="closeSeriesDetail()">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- Confirm Modal -->
 <div class="modal-overlay" id="confirmModal">
   <div class="modal">
     <h3 id="modalTitle">Confirm</h3>
@@ -359,33 +483,31 @@ tr:hover td { background: rgba(255,255,255,0.02); }
     </div>
   </div>
 </div>
+
 <div class="toast-container" id="toastContainer"></div>
+
 <script>
 const API = '/api/v1';
+const GENRES = ['ACTION','ADVENTURE','ANIMATION','COMEDY','CRIME','DOCUMENTARY','DRAMA','FAMILY','FANTASY','HISTORY','HORROR','MUSIC','MYSTERY','ROMANCE','SCI_FI','THRILLER','WAR','WESTERN'];
 let currentUser = null;
-function toast(msg, type = 'success') {
+
+function toast(msg, type) {
   const el = document.createElement('div');
-  el.className = 'toast ' + type;
+  el.className = 'toast ' + (type||'success');
   el.textContent = msg;
   document.getElementById('toastContainer').appendChild(el);
   setTimeout(() => el.remove(), 3500);
 }
 function $(id) { return document.getElementById(id); }
 
-function authFetch(url, options = {}) {
+function authFetch(url, options) {
   const token = localStorage.getItem('token');
-  if (!token) {
-    window.location.href = '/login?redirect=' + encodeURIComponent(window.location.pathname);
-    return Promise.reject(new Error('No token'));
-  }
+  if (!token) { window.location.href = '/login?redirect=' + encodeURIComponent(window.location.pathname); return Promise.reject(new Error('No token')); }
+  options = options || {};
   options.headers = options.headers || {};
   options.headers['Authorization'] = 'Bearer ' + token;
   return fetch(url, options).then(res => {
-    if (res.status === 401) {
-      localStorage.removeItem('token');
-      window.location.href = '/login?redirect=' + encodeURIComponent(window.location.pathname);
-      throw new Error('unauthorized');
-    }
+    if (res.status === 401) { localStorage.removeItem('token'); window.location.href = '/login?redirect=' + encodeURIComponent(window.location.pathname); throw new Error('unauthorized'); }
     return res;
   });
 }
@@ -400,6 +522,8 @@ async function checkAuth() {
       return;
     }
     $('authGate').classList.remove('show');
+    $('authGate').style.display = 'none';
+    $('sidebar').style.display = 'flex';
     $('sidebarUser').textContent = currentUser.email;
     init();
   } catch {
@@ -413,9 +537,12 @@ document.querySelectorAll('.nav-item').forEach(btn => {
     btn.classList.add('active');
     document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
     $(`page-${btn.dataset.page}`).classList.add('active');
+    if (btn.dataset.page === 'series') loadSeries();
+    if (btn.dataset.page === 'upload') loadSeriesDropdowns();
   });
 });
 
+// === FILE UPLOAD ZONE ===
 $('uploadZone').addEventListener('click', () => $('fileInput').click());
 $('uploadZone').addEventListener('dragover', e => { e.preventDefault(); $('uploadZone').classList.add('dragover'); });
 $('uploadZone').addEventListener('dragleave', () => $('uploadZone').classList.remove('dragover'));
@@ -425,18 +552,180 @@ function updateFile() {
   const f = $('fileInput').files[0];
   $('selectedFile').textContent = f ? f.name : '';
 }
+
+// === TYPE TOGGLE ===
+document.querySelectorAll('.type-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.type-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    $('episodeSection').classList.toggle('visible', btn.dataset.type === 'EPISODE');
+  });
+});
+
+// === GENRES ===
+function renderGenres() {
+  const grid = $('genreGrid');
+  GENRES.forEach(g => {
+    const label = document.createElement('label');
+    label.className = 'genre-chip';
+    const cb = document.createElement('input');
+    cb.type = 'checkbox'; cb.value = g;
+    cb.addEventListener('change', () => label.classList.toggle('selected', cb.checked));
+    label.appendChild(cb);
+    label.insertAdjacentHTML('beforeend', `<span class="check"></span>${g.replace(/_/g,' ').toLowerCase().replace(/\b\w/g,c=>c.toUpperCase())}`);
+    grid.appendChild(label);
+  });
+}
+
+// === CAST ===
+let castCount = 0;
+function addCastRow(name, role) {
+  const container = $('castContainer');
+  const div = document.createElement('div');
+  div.className = 'cast-row';
+  div.innerHTML = `
+    <input type="text" class="cast-name" placeholder="Actor name" value="${name||''}">
+    <input type="text" class="cast-role" placeholder="Role name" value="${role||''}">
+    <button class="remove-cast" onclick="this.parentElement.remove()">✕</button>`;
+  container.appendChild(div);
+  castCount++;
+}
+
+// === SERIES / PLAYLIST ===
+async function loadSeriesDropdowns() {
+  try {
+    const res = await authFetch(API + '/admin/series');
+    if (!res.ok) return;
+    const seriesList = await res.json();
+    const sel = $('seriesSelect');
+    const cur = sel.value;
+    sel.innerHTML = '<option value="">Select Series...</option>' + seriesList.map(s => `<option value="${s.id}">${esc(s.title)}</option>`).join('');
+    if (cur) sel.value = cur;
+    const psel = $('playlistSeriesSelect');
+    psel.innerHTML = '<option value="">Select Series...</option>' + seriesList.map(s => `<option value="${s.id}">${esc(s.title)}</option>`).join('');
+  } catch {}
+}
+
+async function onSeriesChange() {
+  const seriesId = $('seriesSelect').value;
+  const sel = $('playlistSelect');
+  sel.innerHTML = '<option value="">Loading...</option>';
+  sel.disabled = true;
+  if (!seriesId) { sel.innerHTML = '<option value="">Select Playlist...</option>'; sel.disabled = false; return; }
+  try {
+    const res = await authFetch(`${API}/admin/series/${seriesId}/playlists`);
+    if (!res.ok) throw new Error();
+    const list = await res.json();
+    sel.innerHTML = '<option value="">Select Playlist...</option>' + list.map(p => `<option value="${p.id}">Season ${p.seasonNumber}${p.title ? ' - ' + esc(p.title) : ''}</option>`).join('');
+  } catch { sel.innerHTML = '<option value="">Error loading playlists</option>'; }
+  sel.disabled = false;
+}
+
+function openSeriesModal() {
+  $('seriesTitle').value = '';
+  $('seriesDesc').value = '';
+  $('seriesStudios').value = '';
+  $('seriesModal').classList.add('open');
+}
+
+function closeSeriesModal() { $('seriesModal').classList.remove('open'); }
+
+async function saveSeries() {
+  const title = $('seriesTitle').value.trim();
+  if (!title) { toast('Title is required', 'error'); return; }
+  try {
+    const res = await authFetch(API + '/admin/series', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ title, description: $('seriesDesc').value.trim(), studios: $('seriesStudios').value.trim() })
+    });
+    if (!res.ok) throw new Error();
+    toast('Series created');
+    closeSeriesModal();
+    loadSeriesDropdowns();
+    loadSeries();
+  } catch { toast('Failed to create series', 'error'); }
+}
+
+function openPlaylistModal() {
+  loadSeriesDropdowns();
+  $('playlistSeasonNum').value = '';
+  $('playlistTitle').value = '';
+  $('playlistModal').classList.add('open');
+}
+
+function closePlaylistModal() { $('playlistModal').classList.remove('open'); }
+
+async function savePlaylist() {
+  const seriesId = $('playlistSeriesSelect').value;
+  const seasonNum = parseInt($('playlistSeasonNum').value);
+  const title = $('playlistTitle').value.trim();
+  if (!seriesId) { toast('Select a series', 'error'); return; }
+  if (!seasonNum) { toast('Season number is required', 'error'); return; }
+  try {
+    const res = await authFetch(API + '/admin/playlists', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ seriesId, seasonNumber: seasonNum, title })
+    });
+    if (!res.ok) throw new Error();
+    toast('Playlist created');
+    closePlaylistModal();
+    loadSeriesDropdowns();
+    if ($('seriesSelect').value === seriesId) onSeriesChange();
+  } catch { toast('Failed to create playlist', 'error'); }
+}
+
+function openSeriesDetail(id, title, desc, studios) {
+  $('detailSeriesTitle').textContent = title;
+  $('detailSeriesMeta').textContent = (studios ? studios + ' • ' : '') + (desc || '');
+  $('detailPlaylistList').innerHTML = '<div class="loading">Loading playlists...</div>';
+  $('seriesDetailModal').classList.add('open');
+  authFetch(`${API}/admin/series/${id}/playlists`).then(r => r.json()).then(list => {
+    if (!list.length) { $('detailPlaylistList').innerHTML = '<p style="color:var(--text-dim);text-align:center;padding:20px;">No seasons yet.</p>'; return; }
+    $('detailPlaylistList').innerHTML = list.map(p => `<div class="playlist-item"><span>Season ${p.seasonNumber}${p.title ? ' — ' + esc(p.title) : ''}</span><span style="color:var(--text-dim);font-size:0.8rem;">${p.noOfVideos||0} videos</span></div>`).join('');
+  }).catch(() => { $('detailPlaylistList').innerHTML = '<p style="color:var(--text-dim);">Failed to load.</p>'; });
+}
+
+function closeSeriesDetail() { $('seriesDetailModal').classList.remove('open'); }
+
+// === UPLOAD ===
 $('uploadBtn').addEventListener('click', async () => {
   const file = $('fileInput').files[0];
   const title = $('uploadTitle').value.trim();
-  const desc = $('uploadDesc').value.trim();
   if (!file || !title) { toast('File and title are required.', 'error'); return; }
+
+  const type = document.querySelector('.type-btn.active').dataset.type;
+  const metadata = {
+    type,
+    title,
+    description: $('uploadDesc').value.trim(),
+    story: $('uploadStory').value.trim(),
+    duration: parseInt($('uploadDuration').value) || null,
+    releaseDate: $('uploadReleaseDate').value || null,
+    language: $('uploadLanguage').value.trim() || null,
+    imdbRating: parseFloat($('uploadImdb').value) || null,
+    genres: Array.from(document.querySelectorAll('.genre-chip.selected')).map(el => el.querySelector('input').value),
+    cast: Array.from(document.querySelectorAll('.cast-row')).map(row => ({
+      name: row.querySelector('.cast-name').value.trim(),
+      role: row.querySelector('.cast-role').value.trim()
+    })).filter(c => c.name),
+    seriesId: null,
+    playlistId: null,
+    episodeNumber: null
+  };
+
+  if (type === 'EPISODE') {
+    metadata.seriesId = $('seriesSelect').value;
+    metadata.playlistId = $('playlistSelect').value;
+    metadata.episodeNumber = parseInt($('uploadEpisodeNum').value) || null;
+  }
+
   const form = new FormData();
   form.append('file', file);
-  form.append('title', title);
-  form.append('description', desc);
+  form.append('metadata', JSON.stringify(metadata));
+
   const token = localStorage.getItem('token');
   const xhr = new XMLHttpRequest();
-  xhr.open('POST', API + '/admin/videos', true);
+  xhr.open('POST', API + '/admin/videos/advanced', true);
   xhr.setRequestHeader('Authorization', 'Bearer ' + (token || ''));
   xhr.upload.onprogress = e => {
     if (e.lengthComputable) {
@@ -449,29 +738,49 @@ $('uploadBtn').addEventListener('click', async () => {
     $('uploadProgressFill').style.width = '0%';
     if (xhr.status === 201) {
       toast('Video uploaded successfully');
-      $('fileInput').value = ''; $('uploadTitle').value = ''; $('uploadDesc').value = ''; $('selectedFile').textContent = '';
+      $('fileInput').value = ''; $('uploadTitle').value = ''; $('uploadDesc').value = '';
+      $('uploadStory').value = ''; $('uploadDuration').value = ''; $('uploadReleaseDate').value = '';
+      $('uploadLanguage').value = ''; $('uploadImdb').value = ''; $('selectedFile').textContent = '';
+      $('uploadEpisodeNum').value = '';
+      document.querySelectorAll('.genre-chip.selected').forEach(c => c.classList.remove('selected'));
+      $('castContainer').innerHTML = '';
+      addCastRow();
       loadDashboard();
     } else {
-      toast('Upload failed: ' + (JSON.parse(xhr.responseText||'{}').message || xhr.statusText), 'error');
+      let msg = 'Upload failed';
+      try { const r = JSON.parse(xhr.responseText); if (r.message) msg = r.message; } catch {}
+      toast(msg, 'error');
     }
   };
   xhr.onerror = () => { $('uploadProgress').style.display = 'none'; toast('Upload failed', 'error'); };
   xhr.send(form);
 });
 
-let modalResolve = null;
-$('modalCancel').addEventListener('click', () => { $('confirmModal').classList.remove('open'); if (modalResolve) modalResolve(false); });
-$('modalConfirm').addEventListener('click', () => { $('confirmModal').classList.remove('open'); if (modalResolve) modalResolve(true); });
-function confirm(title, msg, dangerLabel) {
-  return new Promise(resolve => {
-    modalResolve = resolve;
-    $('modalTitle').textContent = title;
-    $('modalMessage').textContent = msg;
-    $('modalConfirm').textContent = dangerLabel || 'Confirm';
-    $('confirmModal').classList.add('open');
-  });
+// === SERIES PAGE ===
+async function loadSeries() {
+  try {
+    const res = await authFetch(API + '/admin/series');
+    if (!res.ok) throw new Error();
+    const list = await res.json();
+    if (!list.length) {
+      $('seriesList').innerHTML = '<p style="color:var(--text-dim);text-align:center;padding:40px;">No series yet. Create your first series above.</p>';
+      return;
+    }
+    $('seriesList').innerHTML = list.map(s => `
+      <div class="series-card">
+        <div>
+          <h3>${esc(s.title)}</h3>
+          <div class="meta">${s.studios ? esc(s.studios) + ' • ' : ''}${s.playlistCount || 0} season(s)</div>
+        </div>
+        <div class="actions">
+          <button class="btn-sm btn-success" onclick="openSeriesDetail('${s.id}','${escAttr(s.title)}','${escAttr(s.description||'')}','${escAttr(s.studios||'')}')">View</button>
+        </div>
+      </div>
+    `).join('');
+  } catch { toast('Failed to load series', 'error'); }
 }
 
+// === DASHBOARD ===
 async function loadDashboard() {
   try {
     const res = await authFetch(API + '/admin/dashboard');
@@ -486,6 +795,7 @@ async function loadDashboard() {
   } catch { toast('Failed to load dashboard', 'error'); }
 }
 
+// === VIDEOS ===
 async function loadVideos() {
   try {
     const res = await authFetch(API + '/admin/videos');
@@ -494,18 +804,19 @@ async function loadVideos() {
     $('videosBody').innerHTML = videos.map(v =>
       `<tr>
         <td>${esc(v.title||'')}</td>
+        <td><span class="role-badge ${v.type === 'EPISODE' ? 'warning' : 'user'}">${v.type||'—'}</span></td>
         <td>${v.uploadedBy ? esc(v.uploadedBy.email) : '—'}</td>
         <td>${v.uploadedAt ? new Date(v.uploadedAt).toLocaleDateString() : '—'}</td>
         <td class="action-cell">
           <button class="btn-sm btn-danger" onclick="deleteVideo('${v.videoId}','${esc(v.title||'')}')">Delete</button>
         </td>
       </tr>`
-    ).join('') || '<tr><td colspan="4">No videos found</td></tr>';
+    ).join('') || '<tr><td colspan="5">No videos found</td></tr>';
   } catch { toast('Failed to load videos', 'error'); }
 }
 
 async function deleteVideo(id, title) {
-  const ok = await confirm('Delete Video', `Permanently delete "${title}"? This removes the raw file and all transcoded HLS assets.`, 'Delete');
+  const ok = await confirmDialog('Delete Video', `Permanently delete "${title}"? This removes the raw file and all transcoded HLS assets.`, 'Delete');
   if (!ok) return;
   try {
     const res = await authFetch(API + '/admin/videos/' + id, { method: 'DELETE' });
@@ -515,6 +826,7 @@ async function deleteVideo(id, title) {
   } catch { toast('Failed to delete video', 'error'); }
 }
 
+// === USERS ===
 async function loadUsers() {
   try {
     const res = await authFetch(API + '/admin/users');
@@ -539,12 +851,11 @@ async function loadUsers() {
 
 async function changeRole(id, email, newRole) {
   const action = newRole === 'ADMIN' ? 'promote' : 'demote';
-  const ok = await confirm('Change Role', `${action} "${email}" to ${newRole}?`, action === 'promote' ? 'Promote' : 'Demote');
+  const ok = await confirmDialog('Change Role', `${action} "${email}" to ${newRole}?`, action === 'promote' ? 'Promote' : 'Demote');
   if (!ok) return;
   try {
     const res = await authFetch(API + '/admin/users/' + id + '/role', {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
+      method: 'PATCH', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ role: newRole })
     });
     if (!res.ok) throw new Error('Failed');
@@ -553,9 +864,27 @@ async function changeRole(id, email, newRole) {
   } catch { toast('Failed to change role', 'error'); }
 }
 
-function esc(s) { const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+// === CONFIRM DIALOG ===
+let modalResolve = null;
+$('modalCancel').addEventListener('click', () => { $('confirmModal').classList.remove('open'); if (modalResolve) modalResolve(false); });
+$('modalConfirm').addEventListener('click', () => { $('confirmModal').classList.remove('open'); if (modalResolve) modalResolve(true); });
+function confirmDialog(title, msg, dangerLabel) {
+  return new Promise(resolve => {
+    modalResolve = resolve;
+    $('modalTitle').textContent = title;
+    $('modalMessage').textContent = msg;
+    $('modalConfirm').textContent = dangerLabel || 'Confirm';
+    $('confirmModal').classList.add('open');
+  });
+}
+
+function esc(s) { if (typeof s !== 'string') return s || ''; const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+function escAttr(s) { if (typeof s !== 'string') return ''; return s.replace(/'/g, '&apos;').replace(/"/g, '&quot;'); }
 
 function init() {
+  renderGenres();
+  addCastRow();
+  loadSeriesDropdowns();
   loadDashboard();
   document.querySelector('[data-page="dashboard"]').addEventListener('click', loadDashboard);
   document.querySelector('[data-page="videos"]').addEventListener('click', loadVideos);

@@ -12,10 +12,6 @@ export function getMasterPlaylistUrl(videoId) {
   return `${API_BASE}/${videoId}/master.m3u8`
 }
 
-export function getQualityPlaylistUrl(videoId, quality) {
-  return `${API_BASE}/${videoId}/${quality}/index.m3u8`
-}
-
 export function searchVideos(videos, query) {
   if (!query?.trim()) return videos
   const q = query.toLowerCase()

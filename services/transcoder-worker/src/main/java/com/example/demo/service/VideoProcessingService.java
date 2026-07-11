@@ -12,12 +12,14 @@ import org.springframework.stereotype.Service;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
@@ -50,6 +52,81 @@ public class VideoProcessingService {
     public void init() throws IOException {
         Files.createDirectories(videoBaseDir);
         Files.createDirectories(hlsBaseDir);
+    }
+
+    private static class AudioTrack {
+        final int streamIndex;
+        final String language;
+        final String codec;
+
+        AudioTrack(int streamIndex, String language, String codec) {
+            this.streamIndex = streamIndex;
+            this.language = language;
+            this.codec = codec;
+        }
+
+        String getName() {
+            switch (language) {
+                case "hin": return "Hindi";
+                case "jpn": return "Japanese";
+                case "eng": return "English";
+                case "spa": return "Spanish";
+                case "fre": case "fra": return "French";
+                case "deu": case "ger": return "German";
+                case "chi": case "zho": return "Chinese";
+                case "kor": return "Korean";
+                case "ara": return "Arabic";
+                case "por": return "Portuguese";
+                case "rus": return "Russian";
+                case "ita": return "Italian";
+                case "und": return "Unknown";
+                default: return language.toUpperCase(Locale.ROOT);
+            }
+        }
+    }
+
+    private List<AudioTrack> probeAudioTracks(Path inputFile) {
+        List<String> cmd = Arrays.asList(
+                "ffprobe", "-v", "error",
+                "-select_streams", "a",
+                "-show_entries", "stream=index:stream_tags=language",
+                "-of", "csv=p=0",
+                inputFile.toString()
+        );
+        try {
+            ProcessBuilder pb = new ProcessBuilder(cmd);
+            Process process = pb.start();
+            String output;
+            try (InputStream is = process.getInputStream()) {
+                output = new String(is.readAllBytes(), StandardCharsets.UTF_8).trim();
+            }
+            int exitCode = process.waitFor();
+            if (exitCode != 0) {
+                log.warn("ffprobe failed with exit code {}", exitCode);
+                return List.of();
+            }
+
+            List<AudioTrack> tracks = new ArrayList<>();
+            for (String line : output.split("\n")) {
+                line = line.trim();
+                if (line.isEmpty()) continue;
+                String[] parts = line.split(",", 2);
+                if (parts.length == 0) continue;
+                try {
+                    int index = Integer.parseInt(parts[0].trim());
+                    String lang = parts.length > 1 && !parts[1].trim().isEmpty()
+                            ? parts[1].trim() : "und";
+                    tracks.add(new AudioTrack(index, lang, "aac"));
+                } catch (NumberFormatException ignored) {
+                }
+            }
+
+            log.info("Detected {} audio tracks via ffprobe", tracks.size());
+            return tracks;
+        } catch (Exception e) {
+            log.warn("Failed to probe audio tracks: {}", e.getMessage());
+            return List.of();
+        }
     }
 
     public void process(String objectName) {
@@ -88,36 +165,88 @@ public class VideoProcessingService {
         Path outputDir = prepareHlsOutputDir(objectName);
         String outputPath = outputDir.toString();
 
-        List<String> command = Arrays.asList(
-                "ffmpeg",
-                "-y",
-                "-i", inputFile.toString(),
-                "-preset", "ultrafast",
-                "-threads", "2",
-                "-filter_complex",
-                "[0:v]split=4[v1][v2][v3][v4];" +
-                "[0:a]asplit=4[a1][a2][a3][a4];" +
+        List<AudioTrack> audioTracks = probeAudioTracks(inputFile);
+        log.info("Audio tracks detected: {}", audioTracks.size());
+
+        List<String> command = new ArrayList<>();
+        command.add("ffmpeg");
+        command.add("-y");
+        command.add("-i");
+        command.add(inputFile.toString());
+        command.add("-preset");
+        command.add("ultrafast");
+        command.add("-threads");
+        command.add("2");
+
+        // Build filter_complex — split video and first audio track 4 ways each
+        String filterComplex = "[0:v]split=4[v1][v2][v3][v4];" +
+                "[0:a:0]asplit=4[a1][a2][a3][a4];" +
                 "[v1]scale=w=640:h=-2[v360p];" +
                 "[v2]scale=w=854:h=-2[v480p];" +
                 "[v3]scale=w=1280:h=-2[v720p];" +
-                "[v4]scale=w=1920:h=-2[v1080p]",
-                "-map", "[v360p]", "-c:v:0", "libx264", "-b:v:0", "800k", "-maxrate:v:0", "1050k", "-bufsize:v:0", "1600k",
-                "-map", "[a1]", "-c:a:0", "aac", "-b:a:0", "128k", "-ac", "2",
-                "-map", "[v480p]", "-c:v:1", "libx264", "-b:v:1", "1400k", "-maxrate:v:1", "1750k", "-bufsize:v:1", "2800k",
-                "-map", "[a2]", "-c:a:1", "aac", "-b:a:1", "128k", "-ac", "2",
-                "-map", "[v720p]", "-c:v:2", "libx264", "-b:v:2", "2800k", "-maxrate:v:2", "3500k", "-bufsize:v:2", "5600k",
-                "-map", "[a3]", "-c:a:2", "aac", "-b:a:2", "128k", "-ac", "2",
-                "-map", "[v1080p]", "-c:v:3", "libx264", "-b:v:3", "5000k", "-maxrate:v:3", "6250k", "-bufsize:v:3", "10000k",
-                "-map", "[a4]", "-c:a:3", "aac", "-b:a:3", "128k", "-ac", "2",
-                "-f", "hls",
-                "-hls_time", "10",
-                "-hls_list_size", "0",
-                "-max_muxing_queue_size", "1024",
-                "-hls_segment_filename", outputPath + "/v%v/segment_%3d.ts",
-                "-master_pl_name", "master.m3u8",
-                "-var_stream_map", "v:0,a:0 v:1,a:1 v:2,a:2 v:3,a:3",
-                outputPath + "/v%v/index.m3u8"
-        );
+                "[v4]scale=w=1920:h=-2[v1080p]";
+        command.add("-filter_complex");
+        command.add(filterComplex);
+
+        // Video variant definitions
+        String[][] videoVariants = {
+                {"[v360p]", "800k", "1050k", "1600k"},
+                {"[v480p]", "1400k", "1750k", "2800k"},
+                {"[v720p]", "2800k", "3500k", "5600k"},
+                {"[v1080p]", "5000k", "6250k", "10000k"}
+        };
+
+        // Map video streams (output indices 0-3)
+        for (int v = 0; v < 4; v++) {
+            command.add("-map");
+            command.add(videoVariants[v][0]);
+            command.add("-c:v:" + v);
+            command.add("libx264");
+            command.add("-b:v:" + v);
+            command.add(videoVariants[v][1]);
+            command.add("-maxrate:v:" + v);
+            command.add(videoVariants[v][2]);
+            command.add("-bufsize:v:" + v);
+            command.add(videoVariants[v][3]);
+        }
+
+        // Map split audio streams (output indices 4-7, one per variant)
+        for (int a = 0; a < 4; a++) {
+            command.add("-map");
+            command.add("[a" + (a + 1) + "]");
+            command.add("-c:a:" + a);
+            command.add("aac");
+            command.add("-b:a:" + a);
+            command.add("128k");
+            command.add("-ac");
+            command.add("2");
+        }
+
+        // Build var_stream_map: pair each video variant with its own audio copy
+        StringBuilder varStreamMap = new StringBuilder();
+        for (int i = 0; i < 4; i++) {
+            if (i > 0) varStreamMap.append(" ");
+            varStreamMap.append("v:").append(i).append(",a:").append(i);
+        }
+
+        // HLS parameters
+        command.add("-f");
+        command.add("hls");
+        command.add("-hls_time");
+        command.add("10");
+        command.add("-hls_list_size");
+        command.add("0");
+        command.add("-max_muxing_queue_size");
+        command.add("1024");
+        command.add("-hls_segment_filename");
+        command.add(outputPath + "/v%v/segment_%3d.ts");
+        command.add("-master_pl_name");
+        command.add("master.m3u8");
+        if (varStreamMap.length() > 0) {
+            command.add("-var_stream_map");
+            command.add(varStreamMap.toString());
+        }
+        command.add(outputPath + "/v%v/index.m3u8");
 
         ProcessBuilder pb = new ProcessBuilder(command);
         pb.directory(outputDir.toFile());
@@ -135,7 +264,7 @@ public class VideoProcessingService {
         }
         log.info("FFmpeg output:\n{}", output);
 
-        log.info("HLS generated at: {} with segments pattern {}", outputDir, outputPath + "/%v/segment_%3d.ts");
+        log.info("HLS generated at: {}", outputDir);
         return outputDir;
     }
 

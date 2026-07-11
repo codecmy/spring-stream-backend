@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, useCallback } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import Hls from 'hls.js'
-import { fetchVideos, getMasterPlaylistUrl, getQualityPlaylistUrl } from '../api/api'
+import { fetchVideos, getMasterPlaylistUrl } from '../api/api'
 
 const QUALITIES = [
   { label: 'Auto', value: '' },
@@ -20,6 +20,8 @@ export default function PlayerPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [quality, setQuality] = useState('')
+  const [audioTracks, setAudioTracks] = useState([])
+  const [currentAudioTrack, setCurrentAudioTrack] = useState(-1)
 
   useEffect(() => {
     let cancelled = false
@@ -77,6 +79,13 @@ export default function PlayerPage() {
       }
     })
 
+    hls.on(Hls.Events.MANIFEST_PARSED, () => {
+      setAudioTracks(hls.audioTracks)
+      if (hls.audioTracks.length > 0) {
+        setCurrentAudioTrack(hls.audioTrack)
+      }
+    })
+
     hls.attachMedia(videoElement)
     hls.loadSource(url)
   }, [])
@@ -90,7 +99,7 @@ export default function PlayerPage() {
       return
     }
 
-    const url = quality ? getQualityPlaylistUrl(videoId, quality) : getMasterPlaylistUrl(videoId)
+    const url = getMasterPlaylistUrl(videoId)
     setupHls(el, url)
 
     return () => {
@@ -99,10 +108,14 @@ export default function PlayerPage() {
         hlsRef.current = null
       }
     }
-  }, [videoId, quality, setupHls, video])
+  }, [videoId, setupHls, video])
 
   const handleQualityChange = (e) => {
-    setQuality(e.target.value)
+    const val = e.target.value
+    setQuality(val)
+    if (hlsRef.current) {
+      hlsRef.current.currentLevel = val ? parseInt(val.replace('v', '')) : -1
+    }
   }
 
   const fileName = video?.filepath
@@ -183,17 +196,36 @@ export default function PlayerPage() {
             )}
           </div>
 
-          <div className="flex items-center gap-3 shrink-0">
-            <label className="text-surface-300 text-sm">Quality:</label>
-            <select
-              value={quality}
-              onChange={handleQualityChange}
-              className="bg-surface-700 text-white text-sm rounded-lg px-3 py-2 border border-surface-400/30 focus:outline-none focus:border-accent/50"
-            >
-              {QUALITIES.map((q) => (
-                <option key={q.value} value={q.value}>{q.label}</option>
-              ))}
-            </select>
+          <div className="flex items-center gap-4 shrink-0">
+            <div className="flex items-center gap-2">
+              <label className="text-surface-300 text-sm">Quality:</label>
+              <select
+                value={quality}
+                onChange={handleQualityChange}
+                className="bg-surface-700 text-white text-sm rounded-lg px-3 py-2 border border-surface-400/30 focus:outline-none focus:border-accent/50"
+              >
+                {QUALITIES.map((q) => (
+                  <option key={q.value} value={q.value}>{q.label}</option>
+                ))}
+              </select>
+            </div>
+            <div className="flex items-center gap-2">
+              <label className="text-surface-300 text-sm">Audio:</label>
+              <select
+                value={currentAudioTrack}
+                onChange={(e) => {
+                  const id = parseInt(e.target.value)
+                  setCurrentAudioTrack(id)
+                  if (hlsRef.current) hlsRef.current.audioTrack = id
+                }}
+                className="bg-surface-700 text-white text-sm rounded-lg px-3 py-2 border border-surface-400/30 focus:outline-none focus:border-accent/50"
+              >
+                {audioTracks.length === 0 && <option value={-1}>No audio tracks</option>}
+                {audioTracks.map((track, i) => (
+                  <option key={i} value={i}>{track.name}</option>
+                ))}
+              </select>
+            </div>
           </div>
         </div>
       </div>
