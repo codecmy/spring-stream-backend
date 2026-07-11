@@ -176,15 +176,30 @@ public class VideoProcessingService {
         command.add("-preset");
         command.add("ultrafast");
         command.add("-threads");
-        command.add("2");
+        command.add("4");
 
-        // Build filter_complex — split video and first audio track 4 ways each
-        String filterComplex = "[0:v]split=4[v1][v2][v3][v4];" +
-                "[0:a:0]asplit=4[a1][a2][a3][a4];" +
-                "[v1]scale=w=640:h=-2[v360p];" +
-                "[v2]scale=w=854:h=-2[v480p];" +
-                "[v3]scale=w=1280:h=-2[v720p];" +
-                "[v4]scale=w=1920:h=-2[v1080p]";
+        boolean hasAudio = !audioTracks.isEmpty();
+        if (!hasAudio) {
+            command.add("-shortest");
+        }
+
+        String filterComplex;
+        if (hasAudio) {
+            filterComplex = "[0:v]split=4[v1][v2][v3][v4];" +
+                    "[0:a:0]asplit=4[a1][a2][a3][a4];" +
+                    "[v1]scale=w=640:h=-2[v360p];" +
+                    "[v2]scale=w=854:h=-2[v480p];" +
+                    "[v3]scale=w=1280:h=-2[v720p];" +
+                    "[v4]scale=w=1920:h=-2[v1080p]";
+        } else {
+            log.warn("No audio tracks found — generating silent audio stream");
+            filterComplex = "[0:v]split=4[v1][v2][v3][v4];" +
+                    "anullsrc=channel_layout=stereo:sample_rate=44100,asplit=4[a1][a2][a3][a4];" +
+                    "[v1]scale=w=640:h=-2[v360p];" +
+                    "[v2]scale=w=854:h=-2[v480p];" +
+                    "[v3]scale=w=1280:h=-2[v720p];" +
+                    "[v4]scale=w=1920:h=-2[v1080p]";
+        }
         command.add("-filter_complex");
         command.add(filterComplex);
 
@@ -237,7 +252,7 @@ public class VideoProcessingService {
         command.add("-hls_list_size");
         command.add("0");
         command.add("-max_muxing_queue_size");
-        command.add("1024");
+        command.add("4096");
         command.add("-hls_segment_filename");
         command.add(outputPath + "/v%v/segment_%3d.ts");
         command.add("-master_pl_name");
