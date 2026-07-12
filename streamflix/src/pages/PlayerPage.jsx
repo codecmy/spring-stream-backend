@@ -1,14 +1,14 @@
 import { useEffect, useRef, useState, useCallback } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import Hls from 'hls.js'
-import { fetchVideos, getMasterPlaylistUrl } from '../api/api'
+import { fetchVideos, getMasterPlaylistUrl, getAudioTrackMasterUrl } from '../api/api'
 
 const QUALITIES = [
   { label: 'Auto', value: '' },
-  { label: '720p', value: 'v3' },
-  { label: '360p', value: 'v2' },
-  { label: '240p', value: 'v1' },
-  { label: '144p', value: 'v0' },
+  { label: '1080p', value: 'v3' },
+  { label: '720p', value: 'v2' },
+  { label: '480p', value: 'v1' },
+  { label: '360p', value: 'v0' },
 ]
 
 export default function PlayerPage() {
@@ -21,7 +21,8 @@ export default function PlayerPage() {
   const [error, setError] = useState(null)
   const [quality, setQuality] = useState('')
   const [audioTracks, setAudioTracks] = useState([])
-  const [currentAudioTrack, setCurrentAudioTrack] = useState(-1)
+  const [currentAudioTrack, setCurrentAudioTrack] = useState(0)
+  const audioTracksRef = useRef([])
 
   useEffect(() => {
     let cancelled = false
@@ -31,6 +32,15 @@ export default function PlayerPage() {
         const found = videos.find((v) => v.videoId === videoId)
         if (found) {
           setVideo(found)
+          if (found.audioLanguages) {
+            const langs = found.audioLanguages.split(',').filter(Boolean)
+            if (langs.length > 0) {
+              const tracks = langs.map((lang) => ({ lang, name: lang }))
+              setAudioTracks(tracks)
+              audioTracksRef.current = tracks
+              setCurrentAudioTrack(0)
+            }
+          }
         } else {
           setError('Video not found')
         }
@@ -45,7 +55,7 @@ export default function PlayerPage() {
     return () => { cancelled = true }
   }, [videoId])
 
-  const setupHls = useCallback((videoElement, url) => {
+  const startHls = useCallback((videoElement, url) => {
     if (hlsRef.current) {
       hlsRef.current.destroy()
       hlsRef.current = null
@@ -61,9 +71,35 @@ export default function PlayerPage() {
       return
     }
 
+    const BaseLoader = Hls.DefaultConfig.loader
+    class SegmentZeroFilter extends BaseLoader {
+      load(context, config, callbacks) {
+        const origOnSuccess = callbacks.onSuccess
+        callbacks.onSuccess = (response, stats, ctx, networkDetails) => {
+          if (typeof response.data === 'string') {
+            const lines = response.data.split('\n')
+            const result = []
+            for (let i = 0; i < lines.length; i++) {
+              if (lines[i].trim().startsWith('segment_000.ts')) {
+                if (result.length > 0 && result[result.length - 1].trim().startsWith('#EXTINF')) {
+                  result.pop()
+                }
+                continue
+              }
+              result.push(lines[i])
+            }
+            response.data = result.join('\n')
+          }
+          origOnSuccess(response, stats, ctx, networkDetails)
+        }
+        super.load(context, config, callbacks)
+      }
+    }
+
     const hls = new Hls({
       enableWorker: true,
       lowLatencyMode: false,
+      pLoader: SegmentZeroFilter,
       xhrSetup: (xhr) => {
         const token = localStorage.getItem('token')
         if (token) xhr.setRequestHeader('Authorization', 'Bearer ' + token)
@@ -80,10 +116,6 @@ export default function PlayerPage() {
     })
 
     hls.on(Hls.Events.MANIFEST_PARSED, () => {
-      setAudioTracks(hls.audioTracks)
-      if (hls.audioTracks.length > 0) {
-        setCurrentAudioTrack(hls.audioTrack)
-      }
     })
 
     hls.attachMedia(videoElement)
@@ -99,8 +131,8 @@ export default function PlayerPage() {
       return
     }
 
-    const url = getMasterPlaylistUrl(videoId)
-    setupHls(el, url)
+    const url = getAudioTrackMasterUrl(videoId, currentAudioTrack)
+    startHls(el, url)
 
     return () => {
       if (hlsRef.current) {
@@ -108,13 +140,33 @@ export default function PlayerPage() {
         hlsRef.current = null
       }
     }
-  }, [videoId, setupHls, video])
+  }, [videoId, startHls, video])
 
   const handleQualityChange = (e) => {
     const val = e.target.value
     setQuality(val)
     if (hlsRef.current) {
       hlsRef.current.currentLevel = val ? parseInt(val.replace('v', '')) : -1
+    }
+  }
+
+  const handleAudioChange = (e) => {
+    const idx = parseInt(e.target.value)
+    const currentTime = hlsRef.current ? videoRef.current?.currentTime : 0
+    setCurrentAudioTrack(idx)
+    const el = videoRef.current
+    if (!el || !videoId) return
+    const url = getAudioTrackMasterUrl(videoId, idx)
+    startHls(el, url)
+    if (currentTime > 0) {
+      const trySeek = () => {
+        if (videoRef.current && videoRef.current.readyState >= 2) {
+          videoRef.current.currentTime = currentTime
+        } else {
+          setTimeout(trySeek, 200)
+        }
+      }
+      setTimeout(trySeek, 500)
     }
   }
 
@@ -213,16 +265,12 @@ export default function PlayerPage() {
               <label className="text-surface-300 text-sm">Audio:</label>
               <select
                 value={currentAudioTrack}
-                onChange={(e) => {
-                  const id = parseInt(e.target.value)
-                  setCurrentAudioTrack(id)
-                  if (hlsRef.current) hlsRef.current.audioTrack = id
-                }}
+                onChange={handleAudioChange}
                 className="bg-surface-700 text-white text-sm rounded-lg px-3 py-2 border border-surface-400/30 focus:outline-none focus:border-accent/50"
               >
                 {audioTracks.length === 0 && <option value={-1}>No audio tracks</option>}
                 {audioTracks.map((track, i) => (
-                  <option key={i} value={i}>{track.name}</option>
+                  <option key={i} value={i}>{track.name || track.lang || `Track ${i + 1}`}</option>
                 ))}
               </select>
             </div>

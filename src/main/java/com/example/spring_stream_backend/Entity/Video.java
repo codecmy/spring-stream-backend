@@ -57,6 +57,9 @@ public class Video {
 
     private String language;
 
+    @Column(name = "audio_languages", length = 500)
+    private String audioLanguages;
+
     @Column(name = "imdb_rating")
     private BigDecimal imdbRating;
 

@@ -27,12 +27,10 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
@@ -120,6 +118,39 @@ public class VideoServiceImpl implements VideoServices {
             }
             video.setContentType(contentType);
             video.setFilepath(objectName);
+
+            // Probe audio tracks and store language codes
+            try {
+                ProcessBuilder probePb = new ProcessBuilder(
+                        "ffprobe", "-v", "error",
+                        "-select_streams", "a",
+                        "-show_entries", "stream_tags=language",
+                        "-of", "csv=p=0",
+                        tempFile.toString()
+                );
+                Process probeProcess = probePb.start();
+                String probeOutput;
+                try (InputStream is = probeProcess.getInputStream()) {
+                    probeOutput = new String(is.readAllBytes(), java.nio.charset.StandardCharsets.UTF_8).trim();
+                }
+                probeProcess.waitFor();
+                if (probeProcess.exitValue() == 0 && !probeOutput.isEmpty()) {
+                    java.util.LinkedHashSet<String> langs = new java.util.LinkedHashSet<>();
+                    for (String line : probeOutput.split("\n")) {
+                        line = line.trim();
+                        if (!line.isEmpty()) {
+                            langs.add(line);
+                        }
+                    }
+                    video.setAudioLanguages(String.join(",", langs));
+                } else {
+                    video.setAudioLanguages("");
+                }
+            } catch (Exception e) {
+                System.err.println("Failed to probe audio tracks: " + e.getMessage());
+                video.setAudioLanguages("");
+            }
+
             Video save = videoRepositories.save(video);
             rabbitTemplate.convertAndSend(RabbitConfig.EXCHANGE, RabbitConfig.ROUTING_KEY, objectName);
             return save;
@@ -188,105 +219,29 @@ public class VideoServiceImpl implements VideoServices {
         }
     }
     @Override
-    public Resource getQualityPlaylist(String videoId, String quality) throws IOException {
+    public Resource getHlsSubResource(String videoId, String subPath) throws IOException {
         String prefix = findHlsPrefixByVideoId(videoId);
         if (prefix == null) {
             throw new FileNotFoundException("Video not found for id: " + videoId);
         }
+        String objectName = prefix + "/" + subPath;
         try {
             return new InputStreamResource(minioClient.getObject(
                     GetObjectArgs.builder()
                             .bucket(hlsBucketName)
-                            .object(prefix + "/" + quality + "/index.m3u8")
+                            .object(objectName)
                             .build()));
         } catch (ErrorResponseException | InsufficientDataException | InternalException | InvalidKeyException |
                  InvalidResponseException | IOException | NoSuchAlgorithmException | ServerException |
                  XmlParserException e) {
-            throw new FileNotFoundException("Quality playlist not found: " + quality + " for video: " + videoId);
+            throw new FileNotFoundException("HLS sub-resource not found: " + subPath + " for video: " + videoId);
         }
-    }
-
-    @Override
-    public InputStream getVideoSegment(String videoId, String segmentNo, String quality) throws IOException, ServerException, InsufficientDataException, ErrorResponseException, NoSuchAlgorithmException, InvalidKeyException, InvalidResponseException, XmlParserException, InternalException {
-        String prefix = findHlsPrefixByVideoId(videoId);
-        if (prefix == null) {
-            throw new FileNotFoundException("Video not found for id: " + videoId);
-        }
-        String normalizedSegmentName = segmentNo.endsWith(".ts") ? segmentNo : segmentNo + ".ts";
-        String objectName = prefix + "/" + quality + "/" + normalizedSegmentName;
-        try {
-            return minioClient.getObject(
-                    GetObjectArgs.builder()
-                            .bucket(hlsBucketName)
-                            .object(objectName)
-                            .build());
-        } catch (ErrorResponseException e) {
-            if (!"NoSuchKey".equalsIgnoreCase(e.errorResponse().code())) {
-                throw e;
-            }
-        }
-        throw new FileNotFoundException("Quality segment not found for video: " + videoId +
-                ", quality: " + quality + ", segment: " + normalizedSegmentName);
-    }
-
-    @Override
-    public InputStream getVideoSegement(String videoId,String segmentNo) throws IOException, ServerException, InsufficientDataException, ErrorResponseException, NoSuchAlgorithmException, InvalidKeyException, InvalidResponseException, XmlParserException, InternalException {
-        String prefix = findHlsPrefixByVideoId(videoId);
-        if (prefix == null) {
-            throw new FileNotFoundException("Video not found for id: " + videoId);
-        }
-
-        String normalizedSegmentName = segmentNo.endsWith(".ts") ? segmentNo : segmentNo + ".ts";
-        String objectName = prefix + "/" + normalizedSegmentName;
-        try {
-                return minioClient.getObject(
-                        GetObjectArgs.builder()
-                                .bucket(hlsBucketName)
-                                .object(objectName)
-                                .build());
-            } catch (ErrorResponseException e) {
-                if (!"NoSuchKey".equalsIgnoreCase(e.errorResponse().code())) {
-                    throw e;
-                }
-            }
-
-        throw new FileNotFoundException("Segment not found for video id: " + videoId + ", segment: " + normalizedSegmentName);
-    }
-
-    private String buildSegmentObjectNameFromRaw(String rawObjectName, String segmentFileName) {
-        int slashIdx = rawObjectName.lastIndexOf('/');
-        String folder = slashIdx >= 0 ? rawObjectName.substring(0, slashIdx) : "raw";
-        String rawFileName = slashIdx >= 0 ? rawObjectName.substring(slashIdx + 1) : rawObjectName;
-        int dotIdx = rawFileName.lastIndexOf('.');
-        String stem = dotIdx >= 0 ? rawFileName.substring(0, dotIdx) : rawFileName;
-        String hlsFolder = folder.replaceFirst("^raw/?", "video-hls/");
-        if (hlsFolder.endsWith("/")) {
-            hlsFolder = hlsFolder.substring(0, hlsFolder.length() - 1);
-        }
-        String prefix = hlsFolder.isBlank() ? stem : hlsFolder + "/" + stem;
-        return prefix + "/" + segmentFileName;
-    }
-
-    private String buildHlsBaseObjectName(String rawObjectName) {
-        if (rawObjectName == null || rawObjectName.isBlank()) {
-            return "";
-        }
-        return rawObjectName.replaceFirst("^raw/", "video-hls/");
-    }
-
-    private String buildMasterPlaylistObjectName(String rawObjectName) {
-        return buildHlsBaseObjectName(rawObjectName) + "/master.m3u8";
     }
 
     @Override
     public Video findById(String id) {
         return videoRepositories.findById(id).orElse(null);
     }
-    @Override
-    public Video findByTitle(String title) {
-        return videoRepositories.findByTitle(title).orElse(null);
-    }
-
     @Override
     public Resource getThumbnail(String videoId) throws IOException {
         try {
@@ -353,75 +308,6 @@ public class VideoServiceImpl implements VideoServices {
             System.err.println("getHlsFolderNames failed: " + e.getMessage());
         }
         return folders;
-    }
-
-    private List<Video> listHlsVideos() {
-        List<Video> videos = new ArrayList<>();
-        try {
-            Iterable<Result<Item>> results = minioClient.listObjects(
-                    ListObjectsArgs.builder()
-                            .bucket(hlsBucketName)
-                            .delimiter("/")
-                            .build()
-            );
-            for (Result<Item> result : results) {
-                Item item = result.get();
-                if (!item.isDir()) continue;
-                String name = item.objectName();
-                String folder = name.endsWith("/") ? name.substring(0, name.length() - 1) : name;
-                int underscoreIdx = folder.indexOf('_');
-                if (underscoreIdx <= 0) continue;
-                String vid = folder.substring(0, underscoreIdx);
-                String filename = folder.substring(underscoreIdx + 1);
-                int dotIdx = filename.lastIndexOf('.');
-                String title = dotIdx > 0 ? filename.substring(0, dotIdx) : filename;
-                hlsPrefixCache.put(vid, folder);
-                videos.add(Video.builder()
-                        .videoId(vid)
-                        .title(title)
-                        .videoName(filename)
-                        .filepath("raw/" + folder)
-                        .contentType("application/vnd.apple.mpegurl")
-                        .build());
-            }
-        } catch (Exception e) {
-            System.err.println("listHlsVideos failed: " + e.getMessage());
-        }
-        return videos;
-    }
-
-    private List<Video> listRawVideos() {
-        List<Video> videos = new ArrayList<>();
-        try {
-            Iterable<Result<Item>> results = minioClient.listObjects(
-                    ListObjectsArgs.builder()
-                            .bucket(bucketName)
-                            .prefix("raw/")
-                            .build()
-            );
-            for (Result<Item> result : results) {
-                Item item = result.get();
-                if (item.isDir()) continue;
-                String objectName = item.objectName();
-                String stripped = objectName.startsWith("raw/") ? objectName.substring(4) : objectName;
-                int underscoreIdx = stripped.indexOf('_');
-                if (underscoreIdx <= 0) continue;
-                String vid = stripped.substring(0, underscoreIdx);
-                String filename = stripped.substring(underscoreIdx + 1);
-                int dotIdx = filename.lastIndexOf('.');
-                String title = dotIdx > 0 ? filename.substring(0, dotIdx) : filename;
-                videos.add(Video.builder()
-                        .videoId(vid)
-                        .title(title)
-                        .videoName(filename)
-                        .filepath(objectName)
-                        .contentType("video/mp4")
-                        .build());
-            }
-        } catch (Exception e) {
-            System.err.println("listRawVideos failed: " + e.getMessage());
-        }
-        return videos;
     }
 
     @Override

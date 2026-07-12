@@ -17,11 +17,9 @@ import io.minio.GetObjectArgs;
 import io.minio.MinioClient;
 import io.minio.StatObjectArgs;
 import io.minio.StatObjectResponse;
-import io.minio.errors.*;
 
-import java.io.IOException;
-import java.io.InputStream;
 import java.io.FileNotFoundException;
+import java.io.InputStream;
 import java.util.List;
 import java.util.UUID;
 
@@ -57,7 +55,7 @@ public class VideoController {
         try {
             videoServices.save(video, file);
             return ResponseEntity.status(HttpStatus.CREATED).build();
-        } catch (IOException e) {
+        } catch (java.io.IOException e) {
             return ResponseEntity
                     .status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(CustomMessage.builder().message("Video Not uploaded")
@@ -71,8 +69,6 @@ public class VideoController {
         return videoServices.getAllVideo();
     }
 
-
-
     @GetMapping("/{videoId}/thumbnail")
     public ResponseEntity<Resource> getThumbnail(@PathVariable String videoId) {
         try {
@@ -82,12 +78,11 @@ public class VideoController {
                     .body(resource);
         } catch (FileNotFoundException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
-        } catch (IOException e) {
+        } catch (java.io.IOException e) {
             return ResponseEntity.internalServerError().build();
         }
     }
 
-    //stream HLS file
     @GetMapping("/{videoId}/master.m3u8")
     public ResponseEntity<Resource> hlsStreamVideos(
             @PathVariable String videoId
@@ -103,70 +98,40 @@ public class VideoController {
                     .body(resource);
         } catch (FileNotFoundException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
-        } catch (IOException e) {
+        } catch (java.io.IOException e) {
             return ResponseEntity.internalServerError().build();
         }
     }
-    @GetMapping("/{videoId}/{quality}/index.m3u8")
-    public ResponseEntity<Resource> getQualityPlaylist(
+
+    @GetMapping("/{videoId}/{*subPath}")
+    public ResponseEntity<Resource> hlsStreamSubResource(
             @PathVariable String videoId,
-            @PathVariable String quality
+            @PathVariable String subPath
     ){
         try {
-            Resource resource = videoServices.getQualityPlaylist(videoId, quality);
-            if (resource == null) {
-                throw new FileNotFoundException("Quality playlist not found");
+            Resource resource = videoServices.getHlsSubResource(videoId, subPath);
+            if(resource==null){
+                throw new FileNotFoundException("File does not exist");
+            }
+            String contentType;
+            if (subPath.endsWith(".m3u8")) {
+                contentType = "application/vnd.apple.mpegurl";
+            } else if (subPath.endsWith(".ts")) {
+                contentType = "video/mp2t";
+            } else {
+                contentType = "application/octet-stream";
             }
             return ResponseEntity
                     .ok()
-                    .header(HttpHeaders.CONTENT_TYPE, "application/vnd.apple.mpegurl")
+                    .header(HttpHeaders.CONTENT_TYPE, contentType)
                     .body(resource);
         } catch (FileNotFoundException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
-        } catch (IOException e) {
+        } catch (java.io.IOException e) {
             return ResponseEntity.internalServerError().build();
         }
     }
 
-    @GetMapping("/{videoId}/{quality}/{segment}.ts")
-    public ResponseEntity<Resource> serveQualitySegment(
-            @PathVariable String videoId,
-            @PathVariable String quality,
-            @PathVariable String segment
-    ){
-        try {
-            InputStream videoSegment = videoServices.getVideoSegment(videoId, segment, quality);
-            Resource resource = new InputStreamResource(videoSegment);
-            return ResponseEntity
-                    .ok()
-                    .header(HttpHeaders.CONTENT_TYPE, "video/mp2t")
-                    .body(resource);
-        } catch (FileNotFoundException e) {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-        } catch (Exception e) {
-            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-    }
-
-    @GetMapping("/{videoId}/{segment}.ts")
-    public ResponseEntity<Resource> serveSegments(
-            @PathVariable String videoId,
-            @PathVariable String segment
-    ){
-        try {
-            InputStream videoSegment = videoServices.getVideoSegement(videoId,segment);
-            Resource resource = new InputStreamResource(videoSegment);
-            return ResponseEntity
-                    .ok()
-                    .header(HttpHeaders.CONTENT_TYPE,"video/mp2t")
-                    .body(resource);
-
-        }catch (FileNotFoundException e){
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-        }catch (Exception e){
-            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-    }
     @GetMapping("stream/range/{videoId}")
     public ResponseEntity<Resource> streamVideoRange(
             @PathVariable String videoId,
