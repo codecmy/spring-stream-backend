@@ -278,11 +278,7 @@ public class VideoProcessingService {
             master.append("#EXT-X-STREAM-INF:BANDWIDTH=")
                     .append(BANDWIDTHS[v]).append(",")
                     .append("RESOLUTION=").append(RESOLUTIONS[v]).append("\n");
-            if (hasAudio) {
-                master.append("a0/v").append(v).append("/index.m3u8\n");
-            } else {
-                master.append("v").append(v).append("/index.m3u8\n");
-            }
+            master.append("a0/v").append(v).append("/index.m3u8\n");
         }
 
         Path masterPath = outputDir.resolve("master.m3u8");

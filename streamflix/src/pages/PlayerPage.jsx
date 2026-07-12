@@ -71,35 +71,9 @@ export default function PlayerPage() {
       return
     }
 
-    const BaseLoader = Hls.DefaultConfig.loader
-    class SegmentZeroFilter extends BaseLoader {
-      load(context, config, callbacks) {
-        const origOnSuccess = callbacks.onSuccess
-        callbacks.onSuccess = (response, stats, ctx, networkDetails) => {
-          if (typeof response.data === 'string') {
-            const lines = response.data.split('\n')
-            const result = []
-            for (let i = 0; i < lines.length; i++) {
-              if (lines[i].trim().startsWith('segment_000.ts')) {
-                if (result.length > 0 && result[result.length - 1].trim().startsWith('#EXTINF')) {
-                  result.pop()
-                }
-                continue
-              }
-              result.push(lines[i])
-            }
-            response.data = result.join('\n')
-          }
-          origOnSuccess(response, stats, ctx, networkDetails)
-        }
-        super.load(context, config, callbacks)
-      }
-    }
-
     const hls = new Hls({
       enableWorker: true,
       lowLatencyMode: false,
-      pLoader: SegmentZeroFilter,
       xhrSetup: (xhr) => {
         const token = localStorage.getItem('token')
         if (token) xhr.setRequestHeader('Authorization', 'Bearer ' + token)
@@ -131,7 +105,9 @@ export default function PlayerPage() {
       return
     }
 
-    const url = getAudioTrackMasterUrl(videoId, currentAudioTrack)
+    const url = currentAudioTrack === 0
+      ? getMasterPlaylistUrl(videoId)
+      : getAudioTrackMasterUrl(videoId, currentAudioTrack)
     startHls(el, url)
 
     return () => {
