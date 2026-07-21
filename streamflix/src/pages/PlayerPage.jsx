@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, useCallback } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import Hls from 'hls.js'
 import { fetchVideos, getMasterPlaylistUrl, getAudioTrackMasterUrl } from '../api/api'
+import { trackEvent } from '../api/events'
 
 const QUALITIES = [
   { label: 'Auto', value: '' },
@@ -23,6 +24,9 @@ export default function PlayerPage() {
   const [audioTracks, setAudioTracks] = useState([])
   const [currentAudioTrack, setCurrentAudioTrack] = useState(0)
   const audioTracksRef = useRef([])
+  const lastPositionRef = useRef(0)
+  const viewTrackedRef = useRef(false)
+  const qualityRef = useRef('')
 
   useEffect(() => {
     let cancelled = false
@@ -118,9 +122,67 @@ export default function PlayerPage() {
     }
   }, [videoId, startHls, video])
 
+  useEffect(() => {
+    const el = videoRef.current
+    if (!el || !video) return
+
+    if (!viewTrackedRef.current && videoId) {
+      trackEvent({ eventType: 'VIEW', videoId, quality: qualityRef.current })
+      viewTrackedRef.current = true
+    }
+
+    const onPlay = () => {
+      trackEvent({ eventType: 'PLAY', videoId, position: el.currentTime, quality: qualityRef.current })
+    }
+    const onPause = () => {
+      if (!el.ended) {
+        trackEvent({ eventType: 'PAUSE', videoId, position: el.currentTime, quality: qualityRef.current })
+      }
+    }
+    const onSeeked = () => {
+      const diff = Math.abs(el.currentTime - lastPositionRef.current)
+      if (diff > 2) {
+        trackEvent({ eventType: 'SEEK', videoId, seekFrom: lastPositionRef.current, seekTo: el.currentTime, quality: qualityRef.current })
+      }
+    }
+    const onEnded = () => {
+      trackEvent({ eventType: 'COMPLETE', videoId, duration: el.duration, quality: qualityRef.current })
+    }
+    const onTimeUpdate = () => {
+      lastPositionRef.current = el.currentTime
+    }
+    const onLeave = () => {
+      if (el.currentTime > 0 && !el.ended) {
+        trackEvent({ eventType: 'DROP_OFF', videoId, position: el.currentTime, duration: el.duration, quality: qualityRef.current })
+      }
+    }
+    const onVisibilityChange = () => {
+      if (document.visibilityState === 'hidden') onLeave()
+    }
+
+    el.addEventListener('play', onPlay)
+    el.addEventListener('pause', onPause)
+    el.addEventListener('seeked', onSeeked)
+    el.addEventListener('ended', onEnded)
+    el.addEventListener('timeupdate', onTimeUpdate)
+    window.addEventListener('beforeunload', onLeave)
+    document.addEventListener('visibilitychange', onVisibilityChange)
+
+    return () => {
+      el.removeEventListener('play', onPlay)
+      el.removeEventListener('pause', onPause)
+      el.removeEventListener('seeked', onSeeked)
+      el.removeEventListener('ended', onEnded)
+      el.removeEventListener('timeupdate', onTimeUpdate)
+      window.removeEventListener('beforeunload', onLeave)
+      document.removeEventListener('visibilitychange', onVisibilityChange)
+    }
+  }, [videoId, video])
+
   const handleQualityChange = (e) => {
     const val = e.target.value
     setQuality(val)
+    qualityRef.current = val ? val.replace('v', '') + 'p' : 'auto'
     if (hlsRef.current) {
       hlsRef.current.currentLevel = val ? parseInt(val.replace('v', '')) : -1
     }

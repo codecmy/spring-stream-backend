@@ -106,12 +106,20 @@ function NavbarComponent() {
 
           <div className="flex items-center gap-3 md:gap-5">
             {isAdmin && (
-              <a
-                href="/admin.html"
-                className="hidden md:flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold uppercase tracking-wider text-accent border border-accent/30 rounded-md hover:bg-accent/10 transition-colors duration-150"
-              >
-                Admin
-              </a>
+              <div className="hidden md:flex items-center gap-2">
+                <a
+                  href="/admin/analytics"
+                  className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold uppercase tracking-wider text-cyan-400 border border-cyan-400/30 rounded-md hover:bg-cyan-400/10 transition-colors duration-150"
+                >
+                  Analytics
+                </a>
+                <a
+                  href="/admin.html"
+                  className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold uppercase tracking-wider text-accent border border-accent/30 rounded-md hover:bg-accent/10 transition-colors duration-150"
+                >
+                  Admin
+                </a>
+              </div>
             )}
 
             <button
@@ -163,12 +171,20 @@ function NavbarComponent() {
                           {isAdmin && <p className="text-[10px] text-accent font-semibold uppercase mt-0.5">Admin</p>}
                         </div>
                         {isAdmin && (
-                          <a
-                            href="/admin.html"
-                            className="block px-4 py-2.5 text-sm text-surface-100 hover:text-white hover:bg-surface-700 transition-colors"
-                          >
-                            Admin Panel
-                          </a>
+                          <>
+                            <a
+                              href="/admin/analytics"
+                              className="block px-4 py-2.5 text-sm text-surface-100 hover:text-white hover:bg-surface-700 transition-colors"
+                            >
+                              Analytics Dashboard
+                            </a>
+                            <a
+                              href="/admin.html"
+                              className="block px-4 py-2.5 text-sm text-surface-100 hover:text-white hover:bg-surface-700 transition-colors"
+                            >
+                              Admin Panel
+                            </a>
+                          </>
                         )}
                         <button
                           onClick={handleLogout}
@@ -220,12 +236,20 @@ function NavbarComponent() {
                 </button>
               ))}
               {isAdmin && (
-                <a
-                  href="/admin.html"
-                  className="block py-3 text-lg font-medium text-accent border-b border-surface-400/20"
-                >
-                  Admin Panel
-                </a>
+                <>
+                  <a
+                    href="/admin/analytics"
+                    className="block py-3 text-lg font-medium text-cyan-400 border-b border-surface-400/20"
+                  >
+                    Analytics
+                  </a>
+                  <a
+                    href="/admin.html"
+                    className="block py-3 text-lg font-medium text-accent border-b border-surface-400/20"
+                  >
+                    Admin Panel
+                  </a>
+                </>
               )}
               <div className="mt-auto pb-8">
                 {isAuthenticated ? (

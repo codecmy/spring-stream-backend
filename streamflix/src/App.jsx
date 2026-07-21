@@ -9,6 +9,7 @@ import useStore from './store/useStore'
 const HomePage = lazy(() => import('./pages/HomePage'))
 const PlayerPage = lazy(() => import('./pages/PlayerPage'))
 const LoginPage = lazy(() => import('./pages/LoginPage'))
+const AdminAnalyticsPage = lazy(() => import('./pages/AdminAnalyticsPage'))
 
 function LoadingFallback() {
   return (
@@ -40,6 +41,7 @@ export default function App() {
               <Route path="/" element={<HomePage />} />
               <Route path="/watch/:videoId" element={<PlayerPage />} />
               <Route path="/login" element={<LoginPage />} />
+              <Route path="/admin/analytics" element={<AdminAnalyticsPage />} />
               <Route path="*" element={<HomePage />} />
             </Routes>
           </Suspense>

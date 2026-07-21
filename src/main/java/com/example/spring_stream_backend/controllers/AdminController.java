@@ -4,6 +4,7 @@ import com.example.spring_stream_backend.Entity.*;
 import com.example.spring_stream_backend.payload.AdvancedUploadRequest;
 import com.example.spring_stream_backend.payload.CustomMessage;
 import com.example.spring_stream_backend.repositories.*;
+import com.example.spring_stream_backend.services.AnalyticsService;
 import com.example.spring_stream_backend.services.MetadataService;
 import com.example.spring_stream_backend.services.VideoServices;
 import com.example.spring_stream_backend.services.impl.MinioService;
@@ -31,6 +32,7 @@ public class AdminController {
     private final MetadataService metadataService;
     private final PlaylistRepository playlistRepository;
     private final ObjectMapper objectMapper;
+    private final AnalyticsService analyticsService;
 
     public AdminController(VideoServices videoServices,
                            VideoRepositories videoRepositories,
@@ -38,7 +40,8 @@ public class AdminController {
                            MinioService minioService,
                            MetadataService metadataService,
                            PlaylistRepository playlistRepository,
-                           ObjectMapper objectMapper) {
+                           ObjectMapper objectMapper,
+                           AnalyticsService analyticsService) {
         this.videoServices = videoServices;
         this.videoRepositories = videoRepositories;
         this.userRepository = userRepository;
@@ -46,6 +49,7 @@ public class AdminController {
         this.metadataService = metadataService;
         this.playlistRepository = playlistRepository;
         this.objectMapper = objectMapper;
+        this.analyticsService = analyticsService;
     }
 
     @GetMapping("/dashboard")
@@ -269,5 +273,27 @@ public class AdminController {
         user.setRole(Role.valueOf(newRole));
         userRepository.save(user);
         return ResponseEntity.ok(Map.of("message", "User role updated to " + newRole));
+    }
+
+    @GetMapping("/analytics/overview")
+    public ResponseEntity<Map<String, Object>> analyticsOverview(
+            @RequestParam(defaultValue = "7") int days) {
+        return ResponseEntity.ok(analyticsService.getOverview(days));
+    }
+
+    @GetMapping("/analytics/videos")
+    public ResponseEntity<List<Map<String, Object>>> analyticsVideos() {
+        return ResponseEntity.ok(analyticsService.getVideoAnalyticsList());
+    }
+
+    @GetMapping("/analytics/videos/{videoId}")
+    public ResponseEntity<?> analyticsVideoDetail(
+            @PathVariable String videoId,
+            @RequestParam(defaultValue = "7") int days) {
+        Map<String, Object> detail = analyticsService.getVideoDetail(videoId, days);
+        if (detail.containsKey("error")) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(detail);
+        }
+        return ResponseEntity.ok(detail);
     }
 }
